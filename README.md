@@ -3,9 +3,9 @@ Group Name: Super Awesome!!
 
 [MVP Link](http://cs196.cs.illinois.edu)
 
-Team Members: STUDENTS_NETIDS
+Team Members: STUDENTS_NETIDS  
 lduyang2  
-sean13
-jkim829
+sean13  
+jkim829  
 
 Project Manager: rsoni27
