@@ -7,7 +7,7 @@ pygame.init()
 #### Variables
 
 # Game Setup
-WIDTH = 1281
+WIDTH = 1280
 HEIGHT = 720
 FPS = 60
 
