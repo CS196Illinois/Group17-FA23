@@ -11,7 +11,7 @@ pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
 
 # images
-background = pygame.transform.rotozoom(pygame.image.load("Background/Skeld.png").convert(), 0, MAP_SIZE)
+background = pygame.transform.rotozoom(pygame.image.load("Background/ground.png").convert(), 0, MAP_SIZE)
 
 
 class Player(pygame.sprite.Sprite):
@@ -68,7 +68,17 @@ class Player(pygame.sprite.Sprite):
             bullet_group.add(self.bullet)
             all_sprites_group.add(self.bullet)
 
+    def handle_collision(self, enemy_group):
+        for enemy in enemy_group:
+            if self.rect.colliderect(enemy.rect):
+                # Calculate the separation vector between the player and the enemy
+                separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
+                separation_vector.normalize_ip()
+                separation_vector *= self.speed
 
+                # Move the player away from the enemy
+                self.rect.x += separation_vector.x
+                self.rect.y += separation_vector.y
 
     def move(self):
         self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
@@ -79,6 +89,7 @@ class Player(pygame.sprite.Sprite):
         self.user_input()
         self.move()
         self.player_rotation()
+        self.handle_collision(enemy_group)  # Check and resolve collisions with enemies
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -118,15 +129,25 @@ class Enemy(pygame.sprite.Sprite):
         super().__init__(enemy_group, all_sprites_group)
         self.image = pygame.image.load("Enemies/necromancer.png").convert_alpha()
         self.image = pygame.transform.rotozoom(self.image, 0, 2)
+        self.original_image = self.image  # Store the original image for rotation
+        self.flicker_image = self.image.copy()  # Create a copy for flickering effect
 
         self.rect = self.image.get_rect()
         self.rect.center = position
 
+        self.health = 4
+        self.flicker_timer = 0
+        self.flicker_duration = 30  # Adjust the duration as needed
+
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
+        self.acceleration = pygame.math.Vector2()
         self.speed = ENEMY_SPEED
+        self.max_velocity = MAX_ENEMY_VELOCITY
 
         self.position = pygame.math.Vector2(position)
+        self.shoot_timer = 0
+        self.shoot_interval = 60  # Shooting interval in ticks
 
     def hunt_player(self):
         player_vector = pygame.math.Vector2(player.hitbox_rect.center)
@@ -135,10 +156,24 @@ class Enemy(pygame.sprite.Sprite):
 
         if distance > 0:
             self.direction = (player_vector - enemy_vector).normalize()
+            self.angle = math.degrees(math.atan2(self.direction.y, self.direction.x))
+            self.image = pygame.transform.rotate(self.original_image, -self.angle)
+            self.rect = self.image.get_rect(center=self.rect.center)
+            
+            if self.shoot_timer >= self.shoot_interval:
+                self.enemy_shoot()  # Call the enemy_shoot method when facing the player
+                self.shoot_timer = 0
+            else:
+                self.shoot_timer += 1
         else:
             self.direction = pygame.math.Vector2()
 
-        self.velocity = self.direction * self.speed
+        self.acceleration = self.direction * ACCELERATION_CONSTANT
+
+        self.velocity += self.acceleration
+        if self.velocity.length() > self.max_velocity:
+            self.velocity.scale_to_length(self.max_velocity)
+
         self.position += self.velocity
 
         self.rect.centerx = self.position.x
@@ -146,9 +181,90 @@ class Enemy(pygame.sprite.Sprite):
 
     def get_vector_distance(self, vector_1, vector_2):
         return (vector_1 - vector_2).magnitude()
-    
+
+    def enemy_shoot(self):
+        # Create a new bullet at the enemy's position and angle
+        enemy_bullet = Bullet(self.rect.centerx, self.rect.centery, self.angle)
+        all_sprites_group.add(enemy_bullet, enemy_bullets_group)
+        
+    def handle_collision(self, player):
+        if self.rect.colliderect(player.rect):
+            # Calculate the separation vector between the enemy and the player
+            separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(player.rect.center)
+            separation_vector.normalize_ip()
+            separation_vector *= self.speed
+
+            # Move the enemy away from the player
+            self.rect.x += separation_vector.x
+            self.rect.y += separation_vector.y
+
     def update(self):
         self.hunt_player()
+
+        self.handle_collision(player)
+
+        # Check for collisions with bullets
+        bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
+        if bullet_hits:
+            self.health -= 1  # Remove the enemy when hit by a bullet
+            self.flicker_timer = self.flicker_duration  # Start flickering when hit
+
+        if self.health == 0:
+            self.kill()
+        if self.flicker_timer > 0:
+            # Flicker the sprite by changing its alpha (transparency)
+            if self.flicker_timer % 2 == 0:
+                self.image.set_alpha(0)  # Hide the sprite on even frames
+            else:
+                self.image = self.flicker_image  # Restore the original image on odd frames
+
+            self.flicker_timer -= 1
+        else:
+            self.image = self.original_image
+## mod that includes acceleration, shooting, directionality, health, and flickering
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, angle):
+        super().__init__()
+        self.image = pygame.image.load("Bullets/1.png").convert_alpha()
+        self.image = pygame.transform.rotozoom(self.image, 0, BULLET_SCALE)
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.x = x
+        self.y = y
+        self.angle = angle
+        self.speed = BULLET_SPEED
+        self.x_vel = math.cos(self.angle * (2 * math.pi / 360)) * self.speed
+        self.y_vel = math.sin(self.angle * (2 * math.pi / 360)) * self.speed
+        self.bullet_lifetime = BULLET_LIFETIME
+        self.spawn_time = pygame.time.get_ticks()
+
+        # Added a timer for enemy shooting
+        self.shoot_timer = 0  # Initialize the timer to 0
+        self.shoot_interval = 60  # Set the shooting interval (ticks) for the enemy
+
+    def bullet_movement(self):
+        self.x += self.x_vel
+        self.y += self.y_vel
+
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
+
+        if pygame.time.get_ticks() - self.spawn_time > self.bullet_lifetime:
+            self.kill()
+
+    def update(self):
+        self.bullet_movement()
+
+    def enemy_shoot(self):
+        # Check if it's time to shoot (every 60 ticks)
+        if self.shoot_timer >= self.shoot_interval:
+            # Create a new bullet at the enemy's position and angle
+            enemy_bullet = Bullet(self.x, self.y, self.angle)
+            all_sprites_group.add(enemy_bullet, enemy_bullets_group)  # Add the bullet to groups
+            self.shoot_timer = 0  # Reset the timer
+        else:
+            self.shoot_timer += 1  # Increment the timer in each frame
 
 
 class Camera(pygame.sprite.Group):
@@ -172,6 +288,7 @@ class Camera(pygame.sprite.Group):
 all_sprites_group = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
+enemy_bullets_group = pygame.sprite.Group()
 
 camera = Camera()
 player = Player()
