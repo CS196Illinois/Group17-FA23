@@ -107,12 +107,12 @@ class Player(pygame.sprite.Sprite):
 
         bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
-            self.health -= 1  # Remove the enemy when hit by a bullet
+            self.health -= 0.01  # Remove the enemy when hit by a bullet
             self.flicker_timer = self.flicker_duration  # Start flickering when hit
         
         enemy_hits = pygame.sprite.spritecollide(self, enemy_group, False)
         if enemy_hits:
-            self.health -= 2
+            self.health -= 0.01
             self.flicker_timer = self.flicker_duration
 
         if self.health == 0:
@@ -128,7 +128,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image = self.original_image
 
-class Bullet(pygame.sprite.Sprite):
+"""class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
         super().__init__()
         self.image = pygame.image.load("Bullets/1.png").convert_alpha()
@@ -156,7 +156,7 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
     def update(self):
-        self.bullet_movement()
+        self.bullet_movement()"""
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -251,7 +251,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.flicker_timer > 0:
             # Flicker the sprite by changing its alpha (transparency)
             if self.flicker_timer % 2 == 0:
-                self.image.set_alpha(0)  # Hide the sprite on even frames
+                self.image.set_alpha(25)  # Hide the sprite on even frames
             else:
                 self.image = self.flicker_image  # Restore the original image on odd frames
 
