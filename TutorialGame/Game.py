@@ -10,6 +10,9 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
 
+MAP_WIDTH = 3024 #twice the screen width. this is just a placement number idk how big our map will be
+MAP_HEIGHT = 1832 #twice the screen height. also a placement number.
+
 # images
 background = pygame.transform.rotozoom(pygame.image.load("Background/Skeld.png").convert(), 0, MAP_SIZE)
 
@@ -53,6 +56,17 @@ class Player(pygame.sprite.Sprite):
         if self.velocity_x != 0 and self.velocity_y != 0:
             self.velocity_x /= math.sqrt(2)
             self.velocity_y /= math.sqrt(2)
+
+        # Calculate the new position based on user input
+        new_x = self.pos.x + self.velocity_x
+        new_y = self.pos.y + self.velocity_y
+
+        # Ensure the player doesn't go past the screen boundaries
+        new_x = max(0, min(new_x, MAP_WIDTH - self.rect.width))
+        new_y = max(0, min(new_y, MAP_HEIGHT - self.rect.height))
+
+        self.pos.x = new_x
+        self.pos.y = new_y
         
         if pygame.mouse.get_pressed() == (1, 0, 0) or keys[pygame.K_SPACE]:
             self.shoot = True
@@ -71,6 +85,8 @@ class Player(pygame.sprite.Sprite):
 
 
     def move(self):
+        #self.velocity_x = max(0, min(self.velocity_x, WIDTH))
+       # self.velocity_y = max(0, min(self.velocity_y, HEIGHT))
         self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
         self.hitbox_rect.center = self.pos
         self.rect.center = self.hitbox_rect.center
@@ -160,6 +176,8 @@ class Camera(pygame.sprite.Group):
     def custom_draw(self):
         self.offset.x = player.rect.centerx - (WIDTH // 2)
         self.offset.y = player.rect.centery - (HEIGHT // 2)
+        self.offset.x = max(0, min(MAP_WIDTH - WIDTH, self.offset.x))
+        self.offset.y = max(0, min(MAP_HEIGHT - HEIGHT, self.offset.y))
 
         floor_offset_pos = self.floor_rect.topleft - self.offset
         screen.blit(background, floor_offset_pos)
@@ -167,6 +185,7 @@ class Camera(pygame.sprite.Group):
         for sprite in all_sprites_group:
             offset_pos = sprite.rect.topleft - self.offset
             screen.blit(sprite.image, offset_pos)
+    
 
 
 all_sprites_group = pygame.sprite.Group()
