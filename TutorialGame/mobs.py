@@ -19,13 +19,20 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
         self.image = pygame.transform.rotozoom(pygame.image.load("Character/player.png").convert_alpha(), 0, PLAYER_SIZE)
+        self.original_image = self.image
+        self.flicker_image = self.image.copy()
         self.base_player_image = self.image
+        self.flicker_timer = 0
+        self.flicker_duration = 30
+        self.health = 10
+
         self.hitbox_rect = self.base_player_image.get_rect(center = self.pos)
         self.rect = self.hitbox_rect.copy()
         self.speed = PLAYER_SPEED
         self.shoot = False
         self.shoot_cooldown = 0
         self.gun_barrel_offset = pygame.math.Vector2(GUN_OFFSET_X, GUN_OFFSET_Y)
+
 
     def player_rotation(self):
         self.mouse_coords = pygame.mouse.get_pos()
@@ -71,10 +78,14 @@ class Player(pygame.sprite.Sprite):
     def handle_collision(self, enemy_group):
         for enemy in enemy_group:
             if self.rect.colliderect(enemy.rect):
+                if pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center) == 0:
+                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
+                else:
                 # Calculate the separation vector between the player and the enemy
-                separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
-                separation_vector.normalize_ip()
+                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
+                    separation_vector.normalize_ip()
                 separation_vector *= self.speed
+                
 
                 # Move the player away from the enemy
                 self.rect.x += separation_vector.x
@@ -93,6 +104,29 @@ class Player(pygame.sprite.Sprite):
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
+
+        bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
+        if bullet_hits:
+            self.health -= 1  # Remove the enemy when hit by a bullet
+            self.flicker_timer = self.flicker_duration  # Start flickering when hit
+        
+        enemy_hits = pygame.sprite.spritecollide(self, enemy_group, False)
+        if enemy_hits:
+            self.health -= 2
+            self.flicker_timer = self.flicker_duration
+
+        if self.health == 0:
+            self.kill()
+        if self.flicker_timer > 0:
+            # Flicker the sprite by changing its alpha (transparency)
+            if self.flicker_timer % 2 == 0:
+                self.image.set_alpha(0)  # Hide the sprite on even frames
+            else:
+                self.image = self.flicker_image  # Restore the original image on odd frames
+
+            self.flicker_timer -= 1
+        else:
+            self.image = self.original_image
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
@@ -186,17 +220,20 @@ class Enemy(pygame.sprite.Sprite):
         # Create a new bullet at the enemy's position and angle
         enemy_bullet = Bullet(self.rect.centerx, self.rect.centery, self.angle)
         all_sprites_group.add(enemy_bullet, enemy_bullets_group)
-        
-    def handle_collision(self, player):
-        if self.rect.colliderect(player.rect):
-            # Calculate the separation vector between the enemy and the player
-            separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(player.rect.center)
-            separation_vector.normalize_ip()
-            separation_vector *= self.speed
 
-            # Move the enemy away from the player
-            self.rect.x += separation_vector.x
-            self.rect.y += separation_vector.y
+    def handle_collision(self, player):
+        for enemy in enemy_group:
+            if self.rect.colliderect(player.rect):
+                separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(player.rect.center)
+                
+                # Check if the separation_vector's length is greater than a small tolerance
+                if separation_vector.length() > 0.001:  # You can adjust the tolerance as needed
+                    separation_vector.normalize_ip()
+                    separation_vector *= self.speed
+
+                    # Move the enemy away from the player
+                    self.rect.x += separation_vector.x
+                    self.rect.y += separation_vector.y
 
     def update(self):
         self.hunt_player()
@@ -222,6 +259,88 @@ class Enemy(pygame.sprite.Sprite):
         else:
             self.image = self.original_image
 ## mod that includes acceleration, shooting, directionality, health, and flickering
+
+class Slime(pygame.sprite.Sprite):
+    def __init__(self, position):
+        super().__init__(enemy_group, all_sprites_group)
+        self.image = pygame.image.load("Enemies/Slime/Slime 1.png").convert_alpha()
+        self.idle_image = pygame.image.load("Enemies/Slime/Slime 2.png").convert_alpha()
+        self.image = pygame.transform.rotozoom(self.image, 0, 0.5)
+        self.original_image = self.image
+        self.hurt_image = pygame.image.load("Enemies/Slime/Slime Hurt.png").convert_alpha()
+
+        self.rect = self.image.get_rect()
+        self.rect.center = position
+
+        self.health = 10
+        self.hurt_timer = 0
+        self.hurt_duration = 30
+
+        self.direction = pygame.math.Vector2()
+        self.velocity = pygame.math.Vector2()
+        self.speed = SLIME_SPEED
+        self.movement_interval = MOVEMENT_INTERVAL
+        self.movement_timer = 0
+
+        self.position = pygame.math.Vector2(position)
+
+    def hunt_player(self):
+        player_vector = pygame.math.Vector2(player.hitbox_rect.center)
+        enemy_vector = pygame.math.Vector2(self.rect.center)
+        distance = self.get_vector_distance(player_vector, enemy_vector)
+
+        if distance > 0:
+            self.direction = (player_vector - enemy_vector).normalize()
+        else:
+            self.direction = pygame.math.Vector2()
+
+        self.velocity = self.direction * self.speed
+        self.position += self.velocity
+
+        self.rect.centerx = self.position.x
+        self.rect.centery = self.position.y
+
+    def get_vector_distance(self, vector_1, vector_2):
+        return (vector_1 - vector_2).magnitude()
+    
+    def handle_collision(self, player):
+        for enemy in enemy_group:
+            if self.rect.colliderect(player.rect):
+                separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(player.rect.center)
+                
+                # Check if the separation_vector's length is greater than a small tolerance
+                if separation_vector.length() > 0.001:  # You can adjust the tolerance as needed
+                    separation_vector.normalize_ip()
+                    separation_vector *= self.speed
+
+                    # Move the enemy away from the player
+                    self.rect.x += separation_vector.x
+                    self.rect.y += separation_vector.y
+
+    def update(self):
+        self.hunt_player()
+
+        self.handle_collision(player)
+
+        # Check for collisions with bullets
+        bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
+        if bullet_hits:
+            self.health -= 1  # Remove the enemy when hit by a bullet
+            self.hurt_image = self.hurt_duration  # Start flickering when hit
+
+        if self.health == 0:
+            self.kill()
+        if self.hurt_timer > 0:
+            # Flicker the sprite by changing its alpha (transparency)
+            if self.flicker_timer % 2 == 0:
+                self.hurt_image.set_alpha(0)  # Hide the sprite on even frames
+            else:
+                self.image = self.hurt_image  # Restore the original image on odd frames
+
+            self.flicker_timer -= 1
+        else:
+            self.image = self.original_image
+
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
@@ -292,7 +411,8 @@ enemy_bullets_group = pygame.sprite.Group()
 
 camera = Camera()
 player = Player()
-necromancer = Enemy((400, 400))
+necromancer = Enemy((1600, 1600))
+slime = Slime((1200, 400))
 
 
 all_sprites_group.add(player)
