@@ -23,8 +23,8 @@ class Player(pygame.sprite.Sprite):
         self.flicker_image = self.image.copy()
         self.base_player_image = self.image
         self.flicker_timer = 0
-        self.flicker_duration = 30
-        self.health = 10
+        self.flicker_duration = FLICKER_DURATION
+        self.health = PLAYER_HEALTH
 
         self.hitbox_rect = self.base_player_image.get_rect(center = self.pos)
         self.rect = self.hitbox_rect.copy()
@@ -40,7 +40,7 @@ class Player(pygame.sprite.Sprite):
         self.y_change_mouse_player = (self.mouse_coords[1] - HEIGHT // 2)
         self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
         self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
-        self.rect=self.image.get_rect(center = self.hitbox_rect.center)
+        self.rect = self.image.get_rect(center = self.hitbox_rect.center)
 
     def user_input(self):
         self.velocity_x = 0
@@ -97,9 +97,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.hitbox_rect.center
 
     def update(self):
+        self.player_rotation()
         self.user_input()
         self.move()
-        self.player_rotation()
         self.handle_collision(enemy_group)  # Check and resolve collisions with enemies
 
         if self.shoot_cooldown > 0:
@@ -169,9 +169,9 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = position
 
-        self.health = 4
+        self.health = ENEMY1_HEALTH
         self.flicker_timer = 0
-        self.flicker_duration = 30  # Adjust the duration as needed
+        self.flicker_duration = FLICKER_DURATION  # Adjust the duration as needed
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
@@ -272,17 +272,30 @@ class Slime(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = position
 
-        self.health = 10
+        self.health = ENEMY2_HEALTH
         self.hurt_timer = 0
         self.hurt_duration = 30
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
         self.speed = SLIME_SPEED
+        self.slide_duration = SLIDE_DURATION
+        self.slide_timer = 0
         self.movement_interval = MOVEMENT_INTERVAL
         self.movement_timer = 0
 
         self.position = pygame.math.Vector2(position)
+
+    def move(self, speed):
+        self.velocity = self.direction * speed
+
+    def slide(self):
+        self.move(self.speed * 2)  # Adjust the slide speed as needed
+        self.slide_timer = self.slide_duration
+
+    def update_slide_timer(self):
+        if self.slide_timer > 0:
+            self.slide_timer -= 1
 
     def hunt_player(self):
         player_vector = pygame.math.Vector2(player.hitbox_rect.center)
@@ -291,14 +304,23 @@ class Slime(pygame.sprite.Sprite):
 
         if distance > 0:
             self.direction = (player_vector - enemy_vector).normalize()
+            self.angle = math.degrees(math.atan2(self.direction.y, self.direction.x))
+            self.image = pygame.transform.rotate(self.original_image, -self.angle)
+            self.rect = self.image.get_rect(center=self.rect.center)
         else:
             self.direction = pygame.math.Vector2()
 
-        self.velocity = self.direction * self.speed
-        self.position += self.velocity
+        # Check if sliding is allowed and the slide timer is not active
+        if self.slide_timer <= 0:
+            self.move(self.speed)
+        else:
+            self.velocity *= 0  # Stop movement during slide cooldown
+
+        self.position += self.velocity  # Update position even during slide cooldown
 
         self.rect.centerx = self.position.x
         self.rect.centery = self.position.y
+
 
     def get_vector_distance(self, vector_1, vector_2):
         return (vector_1 - vector_2).magnitude()
@@ -326,20 +348,38 @@ class Slime(pygame.sprite.Sprite):
         bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
             self.health -= 1  # Remove the enemy when hit by a bullet
-            self.hurt_image = self.hurt_duration  # Start flickering when hit
+            self.hurt_timer = self.hurt_duration  # Start flickering when hit
 
         if self.health == 0:
             self.kill()
+
         if self.hurt_timer > 0:
             # Flicker the sprite by changing its alpha (transparency)
-            if self.flicker_timer % 2 == 0:
-                self.hurt_image.set_alpha(0)  # Hide the sprite on even frames
+            if self.hurt_timer % 2 == 0:
+                self.image.set_alpha(0)  # Hide the sprite on even frames
             else:
                 self.image = self.hurt_image  # Restore the original image on odd frames
 
-            self.flicker_timer -= 1
+            self.hurt_timer -= 1
         else:
             self.image = self.original_image
+
+        self.update_slide_timer()
+
+        # Update sprite position only if not sliding
+        if self.slide_timer <= 0:
+            self.position += self.velocity
+
+        # Update sprite position
+        self.rect.centerx = self.position.x
+        self.rect.centery = self.position.y
+
+        # Check if it's time to slide
+        if self.movement_timer <= 0:
+            self.slide()
+            self.movement_timer = self.movement_interval
+        else:
+            self.movement_timer -= 1
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -428,8 +468,8 @@ while True:
     
     camera.custom_draw()
     all_sprites_group.update()
-    # pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
-    # pygame.draw.rect(screen, "yellow", player.rect, width = 2)
+    pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
+    pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 
     pygame.display.update()
     clock.tick(FPS)

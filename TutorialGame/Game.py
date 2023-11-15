@@ -210,8 +210,8 @@ while True:
     
     camera.custom_draw()
     all_sprites_group.update()
-    # pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
-    # pygame.draw.rect(screen, "yellow", player.rect, width = 2)
+    pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
+    pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 
     pygame.display.update()
     clock.tick(FPS)
