@@ -3,7 +3,7 @@ WIDTH = 1512 #max is 1512 for M1 Pro (default 1280)
 HEIGHT = 916 #max is 916 for M1 Pro (defauly 720)
 FPS = 60
 
-MAP_SIZE = 1
+MAP_SIZE = 8
 
 PLAYER_START_X = 400
 PLAYER_START_Y = 500
