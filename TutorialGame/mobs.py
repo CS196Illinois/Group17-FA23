@@ -11,7 +11,7 @@ pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
 
 # images
-background = pygame.transform.rotozoom(pygame.image.load("Background/ground.png").convert(), 0, MAP_SIZE)
+background = pygame.transform.rotozoom(pygame.image.load("grass_background.jpg").convert(), 0, MAP_SIZE)
 
 
 class Player(pygame.sprite.Sprite):
@@ -227,7 +227,7 @@ class Enemy(pygame.sprite.Sprite):
                 separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(player.rect.center)
                 
                 # Check if the separation_vector's length is greater than a small tolerance
-                if separation_vector.length() > 0.001:  # You can adjust the tolerance as needed
+                if separation_vector.length() > 1:  # You can adjust the tolerance as needed
                     separation_vector.normalize_ip()
                     separation_vector *= self.speed
 
@@ -381,6 +381,83 @@ class Slime(pygame.sprite.Sprite):
         else:
             self.movement_timer -= 1
 
+class Gripper(pygame.sprite.Sprite):
+    def __init__(self, position):
+        super().__init__(enemy_group, all_sprites_group)
+        self.image = pygame.image.load("Sprites/Mobs/mob_gripper.png")
+        #self.image = pygame.transform.rotozoom(self.image, 0, 1)
+        self.original_image = self.image
+        self.flicker_image = self.image.copy()
+
+        self.rect = self.image.get_rect()
+        self.rect.center = position
+        self.position = pygame.math.Vector2(position)
+        self.direction = pygame.math.Vector2()
+        self.speed = GRIPPER_SPEED
+
+        self.health = GRIPPER_HEALTH
+        self.flicker_timer = 0
+        self.flicker_duration = FLICKER_DURATION
+
+    def self_rotation(self):
+        self.x_vector = (player.hitbox_rect.left - self.rect.left)
+        self.y_vector = (player.hitbox_rect.top - self.rect.top)
+
+        self.angle = math.degrees(math.atan2(self.y_vector, self.x_vector))
+        self.image = pygame.transform.rotate(self.original_image, -self.angle)
+        self.rect = self.image.get_rect(center = self.rect.center)
+
+    def get_vector_distance(self, vector_1, vector_2):
+        return (vector_1 - vector_2).magnitude()
+
+    def hunt_player(self):
+        player_vector = pygame.math.Vector2(player.hitbox_rect.center)
+        self_vector = pygame.math.Vector2(self.rect.center)
+        distance = self.get_vector_distance(player_vector, self_vector)
+
+        if distance > 0:
+            self.direction = (player_vector - self_vector).normalize()
+        else:
+            self.direction = pygame.math.Vector2()
+
+        self.rect.centerx = self.position.x
+        self.rect.centery = self.position.y
+
+    def handle_collision(self, player):
+        if self.rect.colliderect(player.hitbox_rect):
+            self.speed = 0
+            self.rect.left = player.hitbox_rect.left
+            self.rect.top = player.hitbox_rect.top
+        else:
+            self.speed = GRIPPER_SPEED
+
+    def update(self):
+        self.hunt_player()
+        self.self_rotation()
+        self.handle_collision(player)
+
+        bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)
+        if bullet_hits:
+            self.health -= 1
+            self.flicker_timer = self.flicker_duration
+        
+        if self.flicker_timer > 0:
+            if self.flicker_timer % 2 == 0:
+                self.image.set_alpha(0)
+            else:
+                self.image = self.flicker_image
+            
+            self.flicker_timer -= 1
+        else:
+            self.image = self.original_image
+        
+        if self.health == 0:
+            self.kill()
+
+
+        
+        
+
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
@@ -453,6 +530,7 @@ camera = Camera()
 player = Player()
 necromancer = Enemy((1600, 1600))
 slime = Slime((1200, 400))
+gripper = Gripper((800, 800))
 
 
 all_sprites_group.add(player)
