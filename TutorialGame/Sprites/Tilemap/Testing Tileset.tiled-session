@@ -1,0 +1,43 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "Ground.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Ground64.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Wall.tsx": {
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "/Users/lduyang/Desktop/Dev/Group17-FA23/TutorialGame/Sprites",
+    "last.imagePath": "/Users/lduyang/Desktop/Dev/Group17-FA23/TutorialGame/Sprites/Tiles",
+    "map.height": 15,
+    "map.lastUsedExportFilter": "CSV files (*.csv)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 64,
+    "map.tileWidth": 64,
+    "map.width": 30,
+    "openFiles": [
+    ],
+    "project": "Testing Tileset.tiled-project",
+    "recentFiles": [
+        "Ground.tsx",
+        "Wall.tsx",
+        "Ground64.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 64,
+        "width": 64
+    }
+}
