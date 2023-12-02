@@ -1,0 +1,45 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "Ground.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Ground64.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Testing Map.tmx": {
+            "scale": 0.1726,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 912.5144843568945,
+                "y": 593.8586326767092
+            }
+        },
+        "Wall.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Wall64.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "openFiles": [
+        "Testing Map.tmx",
+        "Wall64.tsx",
+        "Ground64.tsx"
+    ],
+    "project": "Testing Tileset.tiled-project",
+    "recentFiles": [
+        "Ground64.tsx",
+        "Wall64.tsx",
+        "Testing Map.tmx",
+        "Ground.tsx",
+        "Wall.tsx"
+    ]
+}
