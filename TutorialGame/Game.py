@@ -213,5 +213,21 @@ while True:
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
     pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 
+    crate_image = pygame.image.load("Sprites/Crates/crate_yellow.png")  # Replace "player.png" with your sprite image file
+    crate_rect = crate_image.get_rect()
+    crate_rect.topleft = (100, 100)
+
+    if player.rect.colliderect(crate_rect):
+        if keys[pygame.K_w]:
+            player.velocity_y -= player.speed
+        elif keys[pygame.K_s]:
+            player.velocity_y += player.speed
+        elif keys[pygame.K_a]:
+            player.velocity_x -= player.speed
+        elif keys[pygame.K_d]:
+            player.velocity_x += player.speed
+
+    
+
     pygame.display.update()
     clock.tick(FPS)
