@@ -6,10 +6,11 @@ from NewSettings import *
 pygame.init()
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+background = pygame.transform.scale(pygame.image.load("Sprites/Maps/blue.png").convert(), (1280,720)) 
+boundary = pygame.Rect(43, 48, 1195, 625)
+
 pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
-
-background = pygame.transform.rotozoom(pygame.image.load("Sprites/Maps/blue.png").convert(), 0, MAP_SIZE)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -505,3 +506,8 @@ while True:
 
     pygame.display.update()
     clock.tick(FPS)
+
+    screen.blit(background, (0, 0))
+    pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
+
+    pygame.display.flip()
