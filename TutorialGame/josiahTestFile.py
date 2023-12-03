@@ -14,8 +14,7 @@ pygame.display.set_caption("Rectangle and Triangle Game")
 
 # Load Player
 player_image = pygame.image.load('Sprites/Characters/character_main.png')
-player_pos = [WIDTH//2, HEIGHT//2]
-player_size = PLAYER_SIZE_VAR
+player_size = player_image.get_size() 
 
 def get_angle_to_mouse(player_pos, mouse_pos):
     dx, dy = mouse_pos[0] - (player_pos[0] + player_size[0] // 2), mouse_pos[1] - (player_pos[1] + player_size[1] // 2)
@@ -30,6 +29,11 @@ def draw_player(screen, image, position, angle):
 bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
 enemy_image = pygame.image.load('Sprites/Mobs/mob_spitter.png')
 
+
+# Player setup
+player_size = player_image.get_size()
+player_pos = [WIDTH//2, HEIGHT//2]
+player_speed = 5
 
 # Crate setup
 crate_image = pygame.image.load('Sprites/Crates/crate_yellow.png')
@@ -93,13 +97,13 @@ while running:
     # Player movement
     new_player_pos = player_pos.copy()
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        new_player_pos[0] -= PLAYER_SPEED
+        new_player_pos[0] -= player_speed
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        new_player_pos[0] += PLAYER_SPEED
+        new_player_pos[0] += player_speed
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        new_player_pos[1] -= PLAYER_SPEED
+        new_player_pos[1] -= player_speed
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        new_player_pos[1] += PLAYER_SPEED
+        new_player_pos[1] += player_speed
 
     if not any(is_collision_with_crate(new_player_pos, obj, object_size) for obj in objects):
         player_pos = new_player_pos
