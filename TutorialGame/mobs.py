@@ -102,11 +102,8 @@ class Player(pygame.sprite.Sprite):
 
     def move(self):
         self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
-        self.hitbox_rect.center = self.pos
-        self.rect.center = self.hitbox_rect.center
 
     def update(self):
-        self.player_rotation()
         self.user_input()
         self.move()
         self.handle_collision(enemy_group)  # Check and resolve collisions with enemies
