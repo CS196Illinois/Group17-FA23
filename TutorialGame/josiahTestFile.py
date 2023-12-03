@@ -1,10 +1,10 @@
 import pygame
 pygame.init()
 
-# Set up the screen, sprite, and walls
+# Set up the screen and player
 screen = pygame.display.set_mode((800, 600))
-sprite = pygame.Rect(100, 100, 50, 50) # Your sprite as a rectangle
-walls = [pygame.Rect(300, 300, 200, 50), pygame.Rect(50, 400, 50, 150)] # List of walls
+player = pygame.Rect(100, 100, 50, 50) # The player as a rectangle
+boundary = pygame.Rect(50, 50, 700, 500) # The boundary rectangle
 
 running = True
 while running:
@@ -13,31 +13,33 @@ while running:
             running = False
 
     keys = pygame.key.get_pressed()
-    speed = 1 # Change this value to make the sprite move faster or slower
-    new_position = sprite.copy()
+    speed = 1 # Speed of the player
 
-    # Move the sprite
+    # Move the player
     if keys[pygame.K_LEFT]:
-        new_position.x -= speed
-    if keys[pygame.K_RIGHT]:
-        new_position.x += speed
-    if keys[pygame.K_UP]:
-        new_position.y -= speed
-    if keys[pygame.K_DOWN]:
-        new_position.y += speed
+        player.x -= speed
+        if player.left < boundary.left: # Check left boundary
+            player.left = boundary.left
 
-    # Collision detection
-    for wall in walls:
-        if new_position.colliderect(wall):
-            break
-    else:
-        sprite = new_position
+    if keys[pygame.K_RIGHT]:
+        player.x += speed
+        if player.right > boundary.right: # Check right boundary
+            player.right = boundary.right
+
+    if keys[pygame.K_UP]:
+        player.y -= speed
+        if player.top < boundary.top: # Check top boundary
+            player.top = boundary.top
+
+    if keys[pygame.K_DOWN]:
+        player.y += speed
+        if player.bottom > boundary.bottom: # Check bottom boundary
+            player.bottom = boundary.bottom
 
     # Drawing
     screen.fill((0, 0, 0)) # Clear screen
-    pygame.draw.rect(screen, (255, 0, 0), sprite) # Draw the sprite
-    for wall in walls:
-        pygame.draw.rect(screen, (0, 255, 0), wall) # Draw the walls
+    pygame.draw.rect(screen, (255, 0, 0), player) # Draw the player
+    pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
 
     pygame.display.flip()
 
