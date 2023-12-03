@@ -115,23 +115,23 @@ class UI():
         self.current_colour = None
 
     def display_health_bar(self): 
-        pygame.draw.rect(screen, BLACK, (50, 55, self.health_bar_length * 3, 20)) # black
+        pygame.draw.rect(screen, BLACK, (50, 58, self.health_bar_length * 3, 20)) # black
 
         if self.current_health >= 75:
-            pygame.draw.rect(screen, GREEN, (50, 55, self.current_health * 3, 20)) # green    
+            pygame.draw.rect(screen, GREEN, (50, 58, self.current_health * 3, 20)) # green    
             self.current_colour = GREEN
         elif self.current_health >= 25:
-            pygame.draw.rect(screen, YELLOW, (50, 55, self.current_health * 3, 20)) # yellow
+            pygame.draw.rect(screen, YELLOW, (50, 58, self.current_health * 3, 20)) # yellow
             self.current_colour = YELLOW 
         elif self.current_health >= 0:
-            pygame.draw.rect(screen, RED, (50, 55, self.current_health * 3, 20)) # red 
+            pygame.draw.rect(screen, RED, (50, 58, self.current_health * 3, 20)) # red 
             self.current_colour = RED
 
-        pygame.draw.rect(screen, WHITE, (50, 55, self.health_bar_length * 3, 20), 4) # white border
+        pygame.draw.rect(screen, WHITE, (50, 58, self.health_bar_length * 3, 20), 4) # white border
 
     def display_health_text(self):
         health_surface = font.render(f"{player_health}/{self.maximum_health}", False, self.current_colour) 
-        health_rect = health_surface.get_rect(center = (423, 63))
+        health_rect = health_surface.get_rect(center = (423, 67))
         screen.blit(health_surface, health_rect)
 
     def update(self): 
