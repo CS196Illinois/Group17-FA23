@@ -21,7 +21,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
-        self.image = pygame.transform.rotozoom(pygame.image.load("Character/player.png").convert_alpha(), 0, PLAYER_SIZE)
+        self.image = pygame.transform.rotozoom(pygame.image.load("Sprites/Characters/character_main.png").convert_alpha(), 0, PLAYER_SIZE)
         self.original_image = self.image
         self.flicker_image = self.image.copy()
         self.base_player_image = self.image
@@ -97,32 +97,15 @@ class Player(pygame.sprite.Sprite):
             laser_group.add(self.bullet)
             all_sprites_group.add(self.bullet)
 
-    def handle_collision(self, enemy_group):
-        for enemy in enemy_group:
-            if self.rect.colliderect(enemy.rect):
-                if pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center) == 0:
-                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
-                else:
-                # Calculate the separation vector between the player and the enemy
-                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
-                    separation_vector.normalize_ip()
-                separation_vector *= self.speed
-                
-
-                # Move the player away from the enemy
-                self.rect.x += separation_vector.x
-                self.rect.y += separation_vector.y
-
     def move(self):
         self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
         self.hitbox_rect.center = self.pos
         self.rect.center = self.hitbox_rect.center
 
     def update(self):
-        self.player_rotation()
         self.user_input()
         self.move()
-        self.handle_collision(enemy_group)  # Check and resolve collisions with enemies
+        self.player_rotation()
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
