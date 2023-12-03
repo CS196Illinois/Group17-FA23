@@ -7,7 +7,7 @@ pygame.init()
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background = pygame.transform.scale(pygame.image.load("Sprites/Maps/blue.png").convert(), (1280,720)) 
-boundary = pygame.Rect(43, 48, 1195, 625)
+boundary = pygame.Rect(67, 65, 1147, 593)
 
 pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
@@ -65,6 +65,18 @@ class Player(pygame.sprite.Sprite):
 
         self.pos.x = new_x
         self.pos.y = new_y
+
+        if self.pos.x < boundary.left: # Check left boundary
+            self.pos.x = boundary.left
+
+        if self.pos.x > boundary.right: # Check right boundary
+            self.pos.x = boundary.right
+        
+        if self.pos.y < boundary.top: # Check top boundary
+            self.pos.y = boundary.top
+        
+        if self.pos.y > boundary.bottom: # Check bottom boundary
+            self.pos.y = boundary.bottom
 
         if pygame.mouse.get_pressed() == (1, 0, 0) or keys[pygame.K_SPACE]:
             self.shoot = True
@@ -495,9 +507,8 @@ while True:
             exit()
 
     screen.blit(background, (0, 0))
-    pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
-
- 
+    screen.blit(player.image, player.rect)
+    player.update()
 
     all_sprites_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
