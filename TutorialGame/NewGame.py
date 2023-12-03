@@ -63,10 +63,6 @@ class Player(pygame.sprite.Sprite):
         new_x = self.pos.x + self.velocity_x
         new_y = self.pos.y + self.velocity_y
 
-        # Ensure the player doesn't go past the screen boundaries
-        new_x = max(0, min(new_x, MAP_WIDTH - self.rect.width))
-        new_y = max(0, min(new_y, MAP_HEIGHT - self.rect.height))
-
         self.pos.x = new_x
         self.pos.y = new_y
 
@@ -231,7 +227,7 @@ class Spitter(pygame.sprite.Sprite):
         else:
             self.image = self.original_image
 
-class Jumper(pygame.sprite.Sprite):
+"""class Jumper(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__(enemy_group, all_sprites_group)
         self.image = pygame.image.load("Sprites/Mobs/mob_jumper.png").convert_alpha()
@@ -343,7 +339,7 @@ class Jumper(pygame.sprite.Sprite):
             self.slide()
             self.movement_timer = self.movement_interval
         else:
-            self.movement_timer -= 1
+            self.movement_timer -= 1"""
 
 class Gripper(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -484,9 +480,9 @@ acid_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 player = Player()
-spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
+"""spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
 jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
-gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))
+gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 
 
 all_sprites_group.add(player)
@@ -499,15 +495,13 @@ while True:
             exit()
 
     screen.blit(background, (0, 0))
-    
+    pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
+
+    screen.blit(player, (600, 300))    
+
     all_sprites_group.update()
-    ##pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
-    ##pygame.draw.rect(screen, "yellow", player.rect, width = 2)
+    pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
+    pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 
     pygame.display.update()
     clock.tick(FPS)
-
-    screen.blit(background, (0, 0))
-    pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
-
-    pygame.display.flip()
