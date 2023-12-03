@@ -94,6 +94,11 @@ class Player(pygame.sprite.Sprite):
             if pygame.mouse.get_pressed() == (1, 0, 0):
                 self.shoot = False
     
+    def move(self):
+        self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
+        self.hitbox_rect.center = self.pos
+        self.rect.center = self.hitbox_rect.center
+
     def is_shooting(self):
         if self.shoot_cooldown == 0:
             self.shoot_cooldown = SHOOT_COOLDOWN
@@ -102,11 +107,43 @@ class Player(pygame.sprite.Sprite):
             bullet_group.add(self.bullet)
             all_sprites_group.add(self.bullet)
 
+    def handle_collision(self, enemy_group):
+        for enemy in enemy_group:
+            if self.rect.colliderect(enemy.rect):
+                if pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center) == 0:
+                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
+                else:
+                # Calculate the separation vector between the player and the enemy
+                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
+                    separation_vector.normalize_ip()
+                separation_vector *= self.speed
+                
 
-    def move(self):
-        self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
-        self.hitbox_rect.center = self.pos
-        self.rect.center = self.hitbox_rect.center
+                # Move the player away from the enemy
+                self.rect.x += separation_vector.x
+                self.rect.y += separation_vector.y
+
+    def get_damage(self, amount):
+        if ui.current_health > 0:
+            ui.current_health -= amount
+            self.health -= amount
+            #if ui.current_health > 0:
+            #    hurt_sound.play()
+            #else:
+            #    death_sound.play()
+        if ui.current_health <= 0: # dead
+            ui.current_health = 0
+            self.health = 0
+            
+        
+    def increase_health(self, amount):
+        if ui.current_health < ui.maximum_health:
+            ui.current_health += amount
+            self.health += amount
+        if ui.current_health >= ui.maximum_health:
+            ui.current_health = ui.maximum_health
+            self.health = ui.maximum_health
+    
 
     def update(self):
         self.player_turning()
@@ -129,10 +166,10 @@ class UI():
     def display_health_bar(self): 
         pygame.draw.rect(screen, BLACK, (10, 15, self.health_bar_length * 3, 20)) # black
 
-        if self.current_health >= 75:
+        if self.current_health >= self.maximum_health * 0.75:
             pygame.draw.rect(screen, GREEN, (10, 15, self.current_health * 3, 20)) # green    
             self.current_colour = GREEN
-        elif self.current_health >= 25:
+        elif self.current_health >= self.maximum_health * 0.25:
             pygame.draw.rect(screen, YELLOW, (10, 15, self.current_health * 3, 20)) # yellow
             self.current_colour = YELLOW 
         elif self.current_health >= 0:
@@ -148,24 +185,29 @@ class UI():
 
 # wave deleted
 
-    def display_coin(self):
+# coin
+    """def display_coin(self):
         coin_image = pygame.image.load("items/coin/0.png").convert_alpha()
         coin_image = pygame.transform.scale_by(coin_image, 3)
         coin_image_rect = coin_image.get_rect(center = (1162,30))
         coin_text = font.render(f"x {game_stats['coins']}", True, (255,223,91))
         screen.blit(coin_text, (1200, 20))
-        screen.blit(coin_image, coin_image_rect)
-
+        screen.blit(coin_image, coin_image_rect)"""
+    def display_powerups(self):
+        text_powerups = font.render(f"Powerup", True, WHITE)
+        screen.blit(text_powerups, (1120, 15))
+        pygame.draw.rect(screen, WHITE, (1160, 40, 80, 80), 4)
 # countdown deleted
 
     def display_enemy_count(self):
         text_1 = font.render(f"Enemies: {game_stats['number_of_enemies'][game_stats['current_wave'] - 1] - game_stats['enemies_killed_or_removed']}",True, GREEN)
-        screen.blit(text_1, (855, 18))
+        screen.blit(text_1, (655, 18))
 
     def update(self): 
         self.display_health_bar()
         self.display_health_text()
-        self.display_coin()
+        # self.display_coin()
+        self.display_powerups()
         self.display_enemy_count()
 
 class Bullet(pygame.sprite.Sprite):
