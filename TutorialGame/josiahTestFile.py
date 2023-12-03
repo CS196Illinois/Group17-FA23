@@ -21,6 +21,10 @@ player_size = player_image.get_size()
 player_pos = [WIDTH//2, HEIGHT//2]
 player_speed = 5
 
+# Crate setup
+crate_image = pygame.image.load('Sprites/Crates/crate_yellow.png')
+object_size = crate_image.get_size()
+
 # Bullet setup
 bullet_size = bullet_image.get_size()
 bullets = []
@@ -46,6 +50,21 @@ def move_enemy(player_pos, enemy_pos):
     enemy_pos[1] += enemy_speed * math.sin(angle)
     return enemy_pos
 
+num_objects = 8
+objects = []
+while len(objects) < num_objects:
+    new_pos = (random.randint(0, WIDTH - object_size[0]), random.randint(0, HEIGHT - object_size[1]))
+    if not any(pygame.Rect(new_pos, object_size).colliderect(pygame.Rect(obj, object_size)) for obj in objects):
+        objects.append(new_pos)
+
+def draw_object(position):
+    screen.blit(crate_image, position)
+
+def is_collision_with_crate(new_player_pos, crate_pos, crate_size):
+    player_rect = pygame.Rect(new_player_pos, player_size)
+    crate_rect = pygame.Rect(crate_pos, crate_size)
+    return player_rect.colliderect(crate_rect)
+
 def is_collision(enemy_pos, bullet):
     bx, by = bullet
     enemy_width, enemy_height = enemy_size
@@ -65,14 +84,18 @@ while running:
     mx, my = pygame.mouse.get_pos()
 
     # Player movement
+    new_player_pos = player_pos.copy()
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        player_pos[0] -= player_speed
+        new_player_pos[0] -= player_speed
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        player_pos[0] += player_speed
+        new_player_pos[0] += player_speed
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        player_pos[1] -= player_speed
+        new_player_pos[1] -= player_speed
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        player_pos[1] += player_speed
+        new_player_pos[1] += player_speed
+
+    if not any(is_collision_with_crate(new_player_pos, obj, object_size) for obj in objects):
+        player_pos = new_player_pos
 
     # Keep player in screen bounds
     player_width, player_height = player_size
@@ -110,8 +133,10 @@ while running:
     # Drawing
     screen.blit(background_image, (0, 0))  # Draw the background image
     draw_player(player_pos)
+    for obj in objects:
+        draw_object(obj)
     for bullet in bullets:
-        draw_bullet((int(bullet[0]), int(bullet[1])))
+        draw_bullet((int(bullet[0]) - 29, int(bullet[1]) - 30))
     draw_enemy(enemy_pos)
     pygame.display.flip()
 
