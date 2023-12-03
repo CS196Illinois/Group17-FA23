@@ -36,10 +36,10 @@ class Player(pygame.sprite.Sprite):
 
     def player_rotation(self):
         self.mouse_coords = pygame.mouse.get_pos()
-        self.x_change_mouse_player = (self.mouse_coords[0] - self.hitbox_rect.centerx // 2)
-        self.y_change_mouse_player = (self.mouse_coords[1] - self.hitbox_rect.centery // 2)
-        self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
-        self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
+        self.x_change_mouse_player = (self.mouse_coords[0] - self.hitbox_rect.centerx)
+        self.y_change_mouse_player = (self.mouse_coords[1] - self.hitbox_rect.centery)
+        self.angle = math.degrees(math.atan2(self.x_change_mouse_player, self.y_change_mouse_player))
+        self.image = pygame.transform.rotate(self.base_player_image, self.angle + 180)
         self.rect = self.image.get_rect(center = self.hitbox_rect.center)
 
     def user_input(self):
@@ -444,9 +444,15 @@ class UI():
         health_rect = health_surface.get_rect(center = (410, 25))
         screen.blit(health_surface, health_rect)
 
+    def display_powerups(self):
+        text_powerups = font.render(f"Powerup", True, WHITE)
+        screen.blit(text_powerups, (1120, 15))
+        pygame.draw.rect(screen, WHITE, (1160, 40, 80, 80), 4) 
+
     def update(self): 
         self.display_health_bar()
         self.display_health_text()
+        self.display_powerups()
 
 
 all_sprites_group = pygame.sprite.Group()
@@ -462,9 +468,9 @@ gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 ui = UI()
 
 all_sprites_group.add(player)
-all_sprites_group.add(spitter)
+"""all_sprites_group.add(spitter)
 all_sprites_group.add(jumper)
-all_sprites_group.add(gripper)
+all_sprites_group.add(gripper)"""
 
 
 while True:
@@ -476,9 +482,9 @@ while True:
 
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
-    screen.blit(spitter.image, spitter.rect)
+    """screen.blit(spitter.image, spitter.rect)
     screen.blit(gripper.image, gripper.rect)
-    screen.blit(jumper.image, jumper.rect)
+    screen.blit(jumper.image, jumper.rect)"""
     ui.update()
     all_sprites_group.update()
     laser_group.update()
