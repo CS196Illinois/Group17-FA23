@@ -39,7 +39,7 @@ class Player(pygame.sprite.Sprite):
         self.x_change_mouse_player = (self.mouse_coords[0] - self.hitbox_rect.centerx)
         self.y_change_mouse_player = (self.mouse_coords[1] - self.hitbox_rect.centery)
         self.angle = math.degrees(math.atan2(self.x_change_mouse_player, self.y_change_mouse_player))
-        self.image = pygame.transform.rotate(self.base_player_image, self.angle + 180)
+        self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
         self.rect = self.image.get_rect(center = self.hitbox_rect.center)
 
     def user_input(self):
@@ -110,11 +110,11 @@ class Player(pygame.sprite.Sprite):
 
         bullet_hits = pygame.sprite.spritecollide(self, acid_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
-            self.health -= 0.01  # Remove the enemy when hit by a bullet
+            self.health -= 10
         
         enemy_hits = pygame.sprite.spritecollide(self, enemy_group, False)
         if enemy_hits:
-            self.health -= 0.01
+            self.health -= 20
 
         if self.health == 0:
             self.kill()
@@ -340,11 +340,7 @@ class Gripper(pygame.sprite.Sprite):
 
     def handle_collision(self, player):
         if self.rect.colliderect(player.hitbox_rect):
-            self.speed = 0
-            self.rect.left = player.hitbox_rect.left
-            self.rect.top = player.hitbox_rect.top
-        else:
-            self.speed = 3
+            self.kill()
 
     def update(self):
         self.hunt_player()
@@ -462,15 +458,15 @@ enemy_group = pygame.sprite.Group()
 
 player = Player()
 """spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
-jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
-gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
+jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))"""
+gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))
 
 ui = UI()
 
 all_sprites_group.add(player)
 """all_sprites_group.add(spitter)
-all_sprites_group.add(jumper)
-all_sprites_group.add(gripper)"""
+all_sprites_group.add(jumper)"""
+all_sprites_group.add(gripper)
 
 
 while True:
@@ -481,13 +477,14 @@ while True:
             exit()
 
     screen.blit(background, (0, 0))
-    screen.blit(player.image, player.rect)
-    """screen.blit(spitter.image, spitter.rect)
-    screen.blit(gripper.image, gripper.rect)
-    screen.blit(jumper.image, jumper.rect)"""
+    """screen.blit(player.image, player.rect)
+    screen.blit(spitter.image, spitter.rect)
+    screen.blit(jumper.image, jumper.rect)
+    screen.blit(gripper.image, gripper.rect)"""
+
     ui.update()
     all_sprites_group.update()
-    laser_group.update()
+    all_sprites_group.draw(screen)
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
     pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 
