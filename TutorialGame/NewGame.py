@@ -36,8 +36,8 @@ class Player(pygame.sprite.Sprite):
 
     def player_rotation(self):
         self.mouse_coords = pygame.mouse.get_pos()
-        self.x_change_mouse_player = (self.mouse_coords[0] - WIDTH // 2)
-        self.y_change_mouse_player = (self.mouse_coords[1] - HEIGHT // 2)
+        self.x_change_mouse_player = (self.mouse_coords[0] - self.hitbox_rect.centerx // 2)
+        self.y_change_mouse_player = (self.mouse_coords[1] - self.hitbox_rect.centery // 2)
         self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
         self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
         self.rect = self.image.get_rect(center = self.hitbox_rect.center)
@@ -455,9 +455,9 @@ acid_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 player = Player()
-spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
+"""spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
 jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
-gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))
+gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 
 ui = UI()
 
