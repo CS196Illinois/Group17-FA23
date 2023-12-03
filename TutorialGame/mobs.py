@@ -46,10 +46,9 @@ class Player(pygame.sprite.Sprite):
         self.mouse_coords = pygame.mouse.get_pos()
         self.x_change_mouse_player = (self.mouse_coords[0] - self.hitbox_rect.centerx)
         self.y_change_mouse_player = (self.mouse_coords[1] - self.hitbox_rect.centery)
-        self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
-        self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
+        self.angle = math.degrees(math.atan2(self.x_change_mouse_player, self.y_change_mouse_player))
+        self.image = pygame.transform.rotate(self.base_player_image, self.angle)
         self.rect = self.image.get_rect(center = self.hitbox_rect.center)
-
 
     def user_input(self):
         self.velocity_x = 0
@@ -571,7 +570,7 @@ bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 enemy_bullets_group = pygame.sprite.Group()
 
-camera = Camera()
+#camera = Camera()
 player = Player()
 """necromancer = Enemy((1600, 1600))"""
 slime = Slime((1200, 400))
@@ -589,7 +588,7 @@ while True:
 
     screen.blit(background, (0, 0))
     
-    camera.custom_draw()
+    # camera.custom_draw()
     all_sprites_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
     pygame.draw.rect(screen, "yellow", player.rect, width = 2)
