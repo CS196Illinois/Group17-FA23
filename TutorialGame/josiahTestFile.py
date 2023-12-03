@@ -108,8 +108,6 @@ while running:
     if not any(is_collision_with_crate(new_player_pos, obj, object_size) for obj in objects):
         player_pos = new_player_pos
 
-
-
     # Keep player in screen bounds
     player_width, player_height = player_size
     player_pos[0] = max(0, min(player_pos[0], WIDTH - player_width))
