@@ -254,9 +254,7 @@ class Jumper(pygame.sprite.Sprite):
         self.position = pygame.math.Vector2(position)
 
     def move(self, speed):
-        if ()
         self.velocity = self.direction * speed
-
 
     def update_slide_timer(self):
         if self.slide_timer > 0:
@@ -310,7 +308,7 @@ class Jumper(pygame.sprite.Sprite):
         self.handle_collision(player)
 
         # Check for collisions with bullets
-        bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
+        bullet_hits = pygame.sprite.spritecollide(self, laser_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
             self.health -= 1  # Remove the enemy when hit by a bullet
             self.hurt_timer = self.hurt_duration  # Start flickering when hit
@@ -485,9 +483,9 @@ acid_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 player = Player()
-spitter = Spitter((1600, 1600))
-jumper = Jumper((1200, 400))
-gripper = Gripper((800, 800))
+spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
+jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
+gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))
 
 
 all_sprites_group.add(player)
