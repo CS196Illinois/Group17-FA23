@@ -2,9 +2,10 @@ import pygame
 pygame.init()
 
 # Set up the screen and player
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((1920,960))
+background = pygame.transform.scale(pygame.image.load("Sprites/Maps/blue.png").convert(), (1920,960)) 
 player = pygame.Rect(100, 100, 50, 50) # The player as a rectangle
-boundary = pygame.Rect(50, 50, 700, 500) # The boundary rectangle
+boundary = pygame.Rect(100, 100, 900, 900) # The boundary rectangle
 
 running = True
 while running:
@@ -37,7 +38,7 @@ while running:
             player.bottom = boundary.bottom
 
     # Drawing
-    screen.fill((0, 0, 0)) # Clear screen
+    screen.blit(background, (0, 0))
     pygame.draw.rect(screen, (255, 0, 0), player) # Draw the player
     pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
 
