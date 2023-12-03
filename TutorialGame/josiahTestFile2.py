@@ -9,6 +9,11 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background = pygame.transform.scale(pygame.image.load("Sprites/Maps/blue.png").convert(), (1280,720)) 
 boundary = pygame.Rect(67, 65, 1147, 593)
 
+# Handle music
+pygame.mixer.init()
+pygame.mixer.music.load("Sound/Music/surreal_sippin.mp3")
+pygame.mixer.music.play(-1) # Loop indefinitely
+
 pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
 
@@ -485,7 +490,11 @@ class Acid(pygame.sprite.Sprite):
         self.bullet_movement()
 
 class bulletSpeedPowerUp(pygame.sprite.Sprite):
-    
+    bullet_powerup_image = pygame.image.load('Sprites/Powerups/powerup_gold.png').convert_alpha()
+    bullet_powerup_rect = bullet_powerup_image.get_rect()   
+    def move_sprite():
+        sprite_rect.x = random.randint(0, screen_size[0] - sprite_rect.width)
+        sprite_rect.y = random.randint(0, screen_size[1] - sprite_rect.height)
 
 
 
