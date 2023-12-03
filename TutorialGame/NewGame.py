@@ -497,7 +497,7 @@ while True:
     screen.blit(background, (0, 0))
     pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
 
-    screen.blit(player, (600, 300))    
+ 
 
     all_sprites_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
