@@ -1,4 +1,5 @@
 import pygame
+import sys
 from sys import exit
 import math
 import random
@@ -11,15 +12,24 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background_image = pygame.transform.scale(pygame.image.load('Sprites/Maps/blue.png').convert(), (1280,720))
 pygame.display.set_caption("Rectangle and Triangle Game")
 
-# Load images
+# Load Player
 player_image = pygame.image.load('Sprites/Characters/character_main.png')
+player_pos = [WIDTH//2, HEIGHT//2]
+player_size = PLAYER_SIZE_VAR
+
+def get_angle_to_mouse(player_pos, mouse_pos):
+    dx, dy = mouse_pos[0] - (player_pos[0] + player_size[0] // 2), mouse_pos[1] - (player_pos[1] + player_size[1] // 2)
+    return math.degrees(math.atan2(-dy, dx)) - 90
+
+def draw_player(screen, image, position, angle):
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center=(position[0] + player_size[0] // 2, position[1] + player_size[1] // 2))
+    screen.blit(rotated_image, new_rect.topleft)
+
+# Load other Images
 bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
 enemy_image = pygame.image.load('Sprites/Mobs/mob_spitter.png')
 
-# Player setup
-player_size = player_image.get_size()
-player_pos = [WIDTH//2, HEIGHT//2]
-player_speed = 5
 
 # Crate setup
 crate_image = pygame.image.load('Sprites/Crates/crate_yellow.png')
@@ -34,9 +44,6 @@ enemy_size = enemy_image.get_size()
 enemy_pos = [random.randint(0, WIDTH-enemy_size[0]), random.randint(0, HEIGHT-enemy_size[1])]
 enemy_speed = 2
 shoot_cooldown = 0
-
-def draw_player(position):
-    screen.blit(player_image, position)
 
 def draw_bullet(position):
     screen.blit(bullet_image, position)
@@ -86,16 +93,18 @@ while running:
     # Player movement
     new_player_pos = player_pos.copy()
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        new_player_pos[0] -= player_speed
+        new_player_pos[0] -= PLAYER_SPEED
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        new_player_pos[0] += player_speed
+        new_player_pos[0] += PLAYER_SPEED
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        new_player_pos[1] -= player_speed
+        new_player_pos[1] -= PLAYER_SPEED
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        new_player_pos[1] += player_speed
+        new_player_pos[1] += PLAYER_SPEED
 
     if not any(is_collision_with_crate(new_player_pos, obj, object_size) for obj in objects):
         player_pos = new_player_pos
+
+
 
     # Keep player in screen bounds
     player_width, player_height = player_size
@@ -132,7 +141,9 @@ while running:
 
     # Drawing
     screen.blit(background_image, (0, 0))  # Draw the background image
-    draw_player(player_pos)
+    # Calculate rotation angle and draw player
+    player_angle = get_angle_to_mouse(player_pos, (mx, my))
+    draw_player(screen, player_image, player_pos, player_angle)
     for obj in objects:
         draw_object(obj)
     for bullet in bullets:
