@@ -14,7 +14,7 @@ FPS = 60
 # Player settings
 PLAYER_START_X = 400
 PLAYER_START_Y = 500
-PLAYER_SIZE = 0.25
+PLAYER_SIZE = 2
 PLAYER_SPEED = 8
 
 # Creating the window
@@ -25,14 +25,14 @@ clock = pygame.time.Clock() # Not sure what this does tbh
 # Creates background image of the .jpg I downloaded off google, ".convert()" apparently makes the image better quality. 
 # pygame.image.load() returns the image file inputted.
 # pygame.transform.scale(image, scale variables) scales the image according to the inputted variables, note the syntax of how width and height have to be in parentheses.
-background = pygame.transform.scale(pygame.image.load("grass_background.jpg").convert(), (WIDTH, HEIGHT)) 
+background = pygame.transform.scale(pygame.image.load("Sprites/Maps/blue.png").convert(), (WIDTH, HEIGHT)) 
 
 
 class Player(pygame.sprite.Sprite):
     # constructor I assume, similar to "public Player(image im, Vector2 pos, int speed) { }" in java.
     def __init__(self):
         super().__init__() # not sure what the super class. Code runs without this line but maybe it's helpful in the future.
-        self.image = pygame.transform.rotozoom(pygame.image.load("player.png").convert_alpha(), 0, PLAYER_SIZE)
+        self.image = pygame.transform.rotozoom(pygame.image.load("Sprites/Characters/character_main.png").convert_alpha(), 0, PLAYER_SIZE)
         self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
         self.speed = PLAYER_SPEED
 

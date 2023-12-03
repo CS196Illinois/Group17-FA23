@@ -18,7 +18,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
-        self.image = pygame.transform.rotozoom(pygame.image.load("Character/player.png").convert_alpha(), 0, PLAYER_SIZE)
+        self.image = pygame.transform.rotozoom(pygame.image.load("Sprites/Characters/character_main.png").convert_alpha(), 0, PLAYER_SIZE)
         self.original_image = self.image
         self.flicker_image = self.image.copy()
         self.base_player_image = self.image
@@ -34,13 +34,22 @@ class Player(pygame.sprite.Sprite):
         self.gun_barrel_offset = pygame.math.Vector2(GUN_OFFSET_X, GUN_OFFSET_Y)
 
 
-    def player_rotation(self):
+    """def player_rotation(self):
         self.mouse_coords = pygame.mouse.get_pos()
         self.x_change_mouse_player = (self.mouse_coords[0] - WIDTH // 2)
         self.y_change_mouse_player = (self.mouse_coords[1] - HEIGHT // 2)
         self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
         self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
+        self.rect = self.image.get_rect(center = self.hitbox_rect.center)"""
+
+    def player_rotation(self):
+        self.mouse_coords = pygame.mouse.get_pos()
+        self.x_change_mouse_player = (self.mouse_coords[0] - self.hitbox_rect.centerx)
+        self.y_change_mouse_player = (self.mouse_coords[1] - self.hitbox_rect.centery)
+        self.angle = math.degrees(math.atan2(self.y_change_mouse_player, self.x_change_mouse_player))
+        self.image = pygame.transform.rotate(self.base_player_image, -self.angle)
         self.rect = self.image.get_rect(center = self.hitbox_rect.center)
+
 
     def user_input(self):
         self.velocity_x = 0
@@ -105,7 +114,7 @@ class Player(pygame.sprite.Sprite):
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
 
-        bullet_hits = pygame.sprite.spritecollide(self, bullet_group, True)  # Detect collisions and remove bullets
+        bullet_hits = pygame.sprite.spritecollide(self, enemy_bullets_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
             self.health -= 0.01  # Remove the enemy when hit by a bullet
             self.flicker_timer = self.flicker_duration  # Start flickering when hit
@@ -454,8 +463,47 @@ class Gripper(pygame.sprite.Sprite):
         if self.health == 0:
             self.kill()
 
+class Gripper(pygame.sprite.Sprite):
+    def __init__(self, position):
+        super().__init__(enemy_group, all_sprites_group)
+        self.image = pygame.image.load("Sprites/Mobs/mob_gripper.png")
+        self.image = pygame.transform.rotozoom(self.image, 0, 1)
+        self.original_image = self.image
+        self.flicker_image = self.image.copy()
 
-        
+        self.rect = self.image.get_rect()
+        self.rect.center = position
+        self.position = pygame.math.Vector2(position)
+        self.direction = pygame.math.Vector2()
+        self.speed = GRIPPER_SPEED
+
+        self.health = GRIPPER_HEALTH
+        self.flicker_timer = 0
+        self.flicker_duration = FLICKER_DURATION
+
+    def self_rotation(self):
+        self.x_vector = (player.hitbox_rect.left - self.rect.left)
+        self.y_vector = (player.hitbox_rect.top - self.rect.top)
+
+        self.angle = math.degrees(math.atan2(self.y_vector, self.x_vector))
+        self.image = pygame.transform.rotate(self.original_image, -self.angle)
+        self.rect = self.image.get_rect(center = self.rect.center)
+
+    def get_vector_distance(self, vector_1, vector_2):
+        return (vector_1 - vector_2).magnitude()
+
+    def hunt_player(self):
+        player_vector = pygame.math.Vector2(player.hitbox_rect.center)
+        self_vector = pygame.math.Vector2(self.rect.center)
+        distance = self.get_vector_distance(player_vector, self_vector)
+
+        if distance > 0:
+            self.direction = (player_vector - self_vector).normalize()
+        else:
+            self.direction = pygame.math.Vector2()
+
+        self.rect.centerx = self.position.x
+        self.rect.centery = self.position.y
         
 
 
@@ -528,9 +576,9 @@ enemy_bullets_group = pygame.sprite.Group()
 
 camera = Camera()
 player = Player()
-necromancer = Enemy((1600, 1600))
+"""necromancer = Enemy((1600, 1600))"""
 slime = Slime((1200, 400))
-gripper = Gripper((800, 800))
+"""gripper = Gripper((800, 800))"""
 
 
 all_sprites_group.add(player)
