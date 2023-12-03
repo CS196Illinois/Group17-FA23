@@ -358,7 +358,7 @@ class Spitter(pygame.sprite.Sprite):
         else:
             self.movement_timer -= 1"""
 
-class Gripper(pygame.sprite.Sprite):
+"""class Gripper(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__(enemy_group, all_sprites_group)
         self.image = pygame.image.load("Sprites/Mobs/mob_gripper.png")
@@ -429,7 +429,7 @@ class Gripper(pygame.sprite.Sprite):
             self.image = self.original_image
         
         if self.health == 0:
-            self.kill()
+            self.kill()"""
 
 class Laser(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
@@ -490,11 +490,11 @@ class Acid(pygame.sprite.Sprite):
         self.bullet_movement()
 
 class bulletSpeedPowerUp(pygame.sprite.Sprite):
-    bullet_powerup_image = pygame.image.load('Sprites/Powerups/powerup_gold.png').convert_alpha()
+    """bullet_powerup_image = pygame.image.load('Sprites/Powerups/powerup_gold.png').convert_alpha()
     bullet_powerup_rect = bullet_powerup_image.get_rect()   
     def move_sprite():
         sprite_rect.x = random.randint(0, screen_size[0] - sprite_rect.width)
-        sprite_rect.y = random.randint(0, screen_size[1] - sprite_rect.height)
+        sprite_rect.y = random.randint(0, screen_size[1] - sprite_rect.height)"""
 
 
 
@@ -504,8 +504,8 @@ acid_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 player = Player()
-"""spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
-jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
+spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
+"""jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
 gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 
 
@@ -520,6 +520,7 @@ while True:
 
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
+    screen.blit(spitter.image, spitter.rect)
     player.update()
 
     all_sprites_group.update()
