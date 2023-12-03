@@ -21,12 +21,9 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
-        self.image = pygame.transform.rotozoom(pygame.image.load("Character/player.png").convert_alpha(), 0, PLAYER_SIZE)
+        self.image = pygame.transform.rotozoom(pygame.image.load("Sprites/Characters/character_main.png").convert_alpha(), 0, PLAYER_SIZE)
         self.original_image = self.image
-        self.flicker_image = self.image.copy()
         self.base_player_image = self.image
-        self.flicker_timer = 0
-        self.flicker_duration = FLICKER_DURATION
         self.health = PLAYER_HEALTH
 
         self.hitbox_rect = self.base_player_image.get_rect(center = self.pos)
@@ -94,24 +91,9 @@ class Player(pygame.sprite.Sprite):
             self.shoot_cooldown = SHOOT_COOLDOWN
             spawn_bullet_pos = self.pos + self.gun_barrel_offset.rotate(self.angle)
             self.bullet = Laser(spawn_bullet_pos[0], spawn_bullet_pos[1], self.angle)
+            screen.blit(self.image, self.rect)  
             laser_group.add(self.bullet)
             all_sprites_group.add(self.bullet)
-
-    def handle_collision(self, enemy_group):
-        for enemy in enemy_group:
-            if self.rect.colliderect(enemy.rect):
-                if pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center) == 0:
-                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
-                else:
-                # Calculate the separation vector between the player and the enemy
-                    separation_vector = pygame.math.Vector2(self.rect.center) - pygame.math.Vector2(enemy.rect.center)
-                    separation_vector.normalize_ip()
-                separation_vector *= self.speed
-                
-
-                # Move the player away from the enemy
-                self.rect.x += separation_vector.x
-                self.rect.y += separation_vector.y
 
     def move(self):
         self.pos += pygame.math.Vector2(self.velocity_x, self.velocity_y)
@@ -119,10 +101,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.hitbox_rect.center
 
     def update(self):
-        self.player_rotation()
         self.user_input()
         self.move()
-        self.handle_collision(enemy_group)  # Check and resolve collisions with enemies
+        self.player_rotation()
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -130,25 +111,13 @@ class Player(pygame.sprite.Sprite):
         bullet_hits = pygame.sprite.spritecollide(self, acid_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
             self.health -= 0.01  # Remove the enemy when hit by a bullet
-            self.flicker_timer = self.flicker_duration  # Start flickering when hit
         
         enemy_hits = pygame.sprite.spritecollide(self, enemy_group, False)
         if enemy_hits:
             self.health -= 0.01
-            self.flicker_timer = self.flicker_duration
 
         if self.health == 0:
             self.kill()
-        if self.flicker_timer > 0:
-            # Flicker the sprite by changing its alpha (transparency)
-            if self.flicker_timer % 2 == 0:
-                self.image.set_alpha(0)  # Hide the sprite on even frames
-            else:
-                self.image = self.flicker_image  # Restore the original image on odd frames
-
-            self.flicker_timer -= 1
-        else:
-            self.image = self.original_image
 
 class Spitter(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -156,14 +125,11 @@ class Spitter(pygame.sprite.Sprite):
         self.image = pygame.image.load("Sprites/Mobs/mob_spitter.png").convert_alpha()
         self.image = pygame.transform.rotozoom(self.image, 0, 2)
         self.original_image = self.image  # Store the original image for rotation
-        self.flicker_image = self.image.copy()  # Create a copy for flickering effect
 
         self.rect = self.image.get_rect()
         self.rect.center = position
 
         self.health = SPITTER_HEALTH
-        self.flicker_timer = 0
-        self.flicker_duration = FLICKER_DURATION  # Adjust the duration as needed
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
@@ -229,35 +195,22 @@ class Spitter(pygame.sprite.Sprite):
         bullet_hits = pygame.sprite.spritecollide(self, laser_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
             self.health -= 1  # Remove the enemy when hit by a bullet
-            self.flicker_timer = self.flicker_duration  # Start flickering when hit
 
         if self.health == 0:
             self.kill()
-        if self.flicker_timer > 0:
-            # Flicker the sprite by changing its alpha (transparency)
-            if self.flicker_timer % 2 == 0:
-                self.image.set_alpha(25)  # Hide the sprite on even frames
-            else:
-                self.image = self.flicker_image  # Restore the original image on odd frames
 
-            self.flicker_timer -= 1
-        else:
-            self.image = self.original_image
-
-"""class Jumper(pygame.sprite.Sprite):
+class Jumper(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__(enemy_group, all_sprites_group)
         self.image = pygame.image.load("Sprites/Mobs/mob_jumper.png").convert_alpha()
         self.image = pygame.transform.rotozoom(self.image, 0, 0.5)
         self.original_image = self.image
-        self.flicker_image = self.image.copy()
+        self.slide_timer = 0
 
         self.rect = self.image.get_rect()
         self.rect.center = position
 
         self.health = JUMPER_HEALTH
-        self.flicker_timer = 0
-        self.flicker_duration = FLICKER_DURATION
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
@@ -325,21 +278,9 @@ class Spitter(pygame.sprite.Sprite):
         bullet_hits = pygame.sprite.spritecollide(self, laser_group, True)  # Detect collisions and remove bullets
         if bullet_hits:
             self.health -= 1  # Remove the enemy when hit by a bullet
-            self.hurt_timer = self.hurt_duration  # Start flickering when hit
 
         if self.health == 0:
             self.kill()
-
-        if self.hurt_timer > 0:
-            # Flicker the sprite by changing its alpha (transparency)
-            if self.hurt_timer % 2 == 0:
-                self.image.set_alpha(0)  # Hide the sprite on even frames
-            else:
-                self.image = self.hurt_image  # Restore the original image on odd frames
-
-            self.hurt_timer -= 1
-        else:
-            self.image = self.original_image
 
         self.update_slide_timer()
 
@@ -353,10 +294,10 @@ class Spitter(pygame.sprite.Sprite):
 
         # Check if it's time to slide
         if self.movement_timer <= 0:
-            self.slide()
+            #self.slide()
             self.movement_timer = self.movement_interval
         else:
-            self.movement_timer -= 1"""
+            self.movement_timer -= 1
 
 class Gripper(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -364,7 +305,6 @@ class Gripper(pygame.sprite.Sprite):
         self.image = pygame.image.load("Sprites/Mobs/mob_gripper.png")
         self.image = pygame.transform.rotozoom(self.image, 0, 1)
         self.original_image = self.image
-        self.flicker_image = self.image.copy()
 
         self.rect = self.image.get_rect()
         self.rect.center = position
@@ -373,8 +313,6 @@ class Gripper(pygame.sprite.Sprite):
         self.speed = GRIPPER_SPEED
 
         self.health = GRIPPER_HEALTH
-        self.flicker_timer = 0
-        self.flicker_duration = FLICKER_DURATION
 
     def self_rotation(self):
         self.x_vector = (player.hitbox_rect.left - self.rect.left)
@@ -406,7 +344,7 @@ class Gripper(pygame.sprite.Sprite):
             self.rect.left = player.hitbox_rect.left
             self.rect.top = player.hitbox_rect.top
         else:
-            self.speed = GRIPPER_SPEED
+            self.speed = 3
 
     def update(self):
         self.hunt_player()
@@ -416,17 +354,6 @@ class Gripper(pygame.sprite.Sprite):
         bullet_hits = pygame.sprite.spritecollide(self, laser_group, True)
         if bullet_hits:
             self.health -= 1
-            self.flicker_timer = self.flicker_duration
-        
-        if self.flicker_timer > 0:
-            if self.flicker_timer % 2 == 0:
-                self.image.set_alpha(0)
-            else:
-                self.image = self.flicker_image
-            
-            self.flicker_timer -= 1
-        else:
-            self.image = self.original_image
         
         if self.health == 0:
             self.kill()
@@ -528,13 +455,17 @@ acid_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 player = Player()
-"""spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
+spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
 jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
-gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
+gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))
 
 ui = UI()
 
 all_sprites_group.add(player)
+all_sprites_group.add(spitter)
+all_sprites_group.add(jumper)
+all_sprites_group.add(gripper)
+
 
 while True:
     keys = pygame.key.get_pressed()
@@ -545,9 +476,12 @@ while True:
 
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
-    player.update()
+    screen.blit(spitter.image, spitter.rect)
+    screen.blit(gripper.image, gripper.rect)
+    screen.blit(jumper.image, jumper.rect)
     ui.update()
     all_sprites_group.update()
+    laser_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
     pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 
