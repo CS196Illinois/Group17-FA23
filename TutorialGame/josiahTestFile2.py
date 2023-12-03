@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
 
         self.hitbox_rect = self.base_player_image.get_rect(center = self.pos)
         self.rect = self.hitbox_rect.copy()
-        self.speed = PLAYER_SPEED
+        self.speed = 2
         self.shoot = False
         self.shoot_cooldown = 0
         self.gun_barrel_offset = pygame.math.Vector2(GUN_OFFSET_X, GUN_OFFSET_Y)
@@ -167,7 +167,7 @@ class Spitter(pygame.sprite.Sprite):
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
-        self.speed = SPITTER_SPEED
+        self.speed = 2
 
         self.position = pygame.math.Vector2(position)
         self.shoot_timer = 0
@@ -510,6 +510,7 @@ gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 
 
 all_sprites_group.add(player)
+all_sprites_group.add(spitter)
 
 while True:
     keys = pygame.key.get_pressed()
@@ -521,7 +522,7 @@ while True:
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
     screen.blit(spitter.image, spitter.rect)
-    player.update()
+    all_sprites_group.update()
 
     all_sprites_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
