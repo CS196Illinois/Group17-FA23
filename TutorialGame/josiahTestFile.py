@@ -1,0 +1,46 @@
+import pygame
+pygame.init()
+
+# Set up the screen and player
+screen = pygame.display.set_mode((800, 600))
+player = pygame.Rect(100, 100, 50, 50) # The player as a rectangle
+boundary = pygame.Rect(50, 50, 700, 500) # The boundary rectangle
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    keys = pygame.key.get_pressed()
+    speed = 1 # Speed of the player
+
+    # Move the player
+    if keys[pygame.K_LEFT]:
+        player.x -= speed
+        if player.left < boundary.left: # Check left boundary
+            player.left = boundary.left
+
+    if keys[pygame.K_RIGHT]:
+        player.x += speed
+        if player.right > boundary.right: # Check right boundary
+            player.right = boundary.right
+
+    if keys[pygame.K_UP]:
+        player.y -= speed
+        if player.top < boundary.top: # Check top boundary
+            player.top = boundary.top
+
+    if keys[pygame.K_DOWN]:
+        player.y += speed
+        if player.bottom > boundary.bottom: # Check bottom boundary
+            player.bottom = boundary.bottom
+
+    # Drawing
+    screen.fill((0, 0, 0)) # Clear screen
+    pygame.draw.rect(screen, (255, 0, 0), player) # Draw the player
+    pygame.draw.rect(screen, (255, 255, 255), boundary, 2) # Draw the boundary
+
+    pygame.display.flip()
+
+pygame.quit()
