@@ -28,7 +28,7 @@ class Player(pygame.sprite.Sprite):
 
         self.hitbox_rect = self.base_player_image.get_rect(center = self.pos)
         self.rect = self.hitbox_rect.copy()
-        self.speed = 2
+        self.speed = PLAYER_SPEED
         self.shoot = False
         self.shoot_cooldown = 0
         self.gun_barrel_offset = pygame.math.Vector2(GUN_OFFSET_X, GUN_OFFSET_Y)
@@ -91,6 +91,7 @@ class Player(pygame.sprite.Sprite):
             self.shoot_cooldown = SHOOT_COOLDOWN
             spawn_bullet_pos = self.pos + self.gun_barrel_offset.rotate(self.angle)
             self.bullet = Laser(spawn_bullet_pos[0], spawn_bullet_pos[1], self.angle)
+            screen.blit(self.image, self.rect)  
             laser_group.add(self.bullet)
             all_sprites_group.add(self.bullet)
 
@@ -132,7 +133,7 @@ class Spitter(pygame.sprite.Sprite):
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
-        self.speed = 2
+        self.speed = SPITTER_SPEED
 
         self.position = pygame.math.Vector2(position)
         self.shoot_timer = 0
@@ -213,7 +214,7 @@ class Jumper(pygame.sprite.Sprite):
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
-        self.speed = 2
+        self.speed = JUMPER_SPEED
         self.movement_interval = MOVEMENT_INTERVAL
         self.movement_timer = 0
 
@@ -309,7 +310,7 @@ class Gripper(pygame.sprite.Sprite):
         self.rect.center = position
         self.position = pygame.math.Vector2(position)
         self.direction = pygame.math.Vector2()
-        self.speed = 3
+        self.speed = GRIPPER_SPEED
 
         self.health = GRIPPER_HEALTH
 
@@ -475,11 +476,12 @@ while True:
 
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
-    #screen.blit(spitter.image, spitter.rect)
-    #screen.blit(gripper.image, gripper.rect)
-   # screen.blit(jumper.image, jumper.rect)
+    screen.blit(spitter.image, spitter.rect)
+    screen.blit(gripper.image, gripper.rect)
+    screen.blit(jumper.image, jumper.rect)
     ui.update()
     all_sprites_group.update()
+    laser_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
     pygame.draw.rect(screen, "yellow", player.rect, width = 2)
 

@@ -207,6 +207,7 @@ while True:
             exit()
 
     screen.blit(background, (0, 0))
+    #screen.blit(player.image, player.rect)
     
     camera.custom_draw()
     all_sprites_group.update()
