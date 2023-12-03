@@ -31,7 +31,7 @@ class Player(pygame.sprite.Sprite):
 
         self.hitbox_rect = self.base_player_image.get_rect(center = self.pos)
         self.rect = self.hitbox_rect.copy()
-        self.speed = PLAYER_SPEED
+        self.speed = 2
         self.shoot = False
         self.shoot_cooldown = 0
         self.gun_barrel_offset = pygame.math.Vector2(GUN_OFFSET_X, GUN_OFFSET_Y)
@@ -167,7 +167,7 @@ class Spitter(pygame.sprite.Sprite):
 
         self.direction = pygame.math.Vector2()
         self.velocity = pygame.math.Vector2()
-        self.speed = SPITTER_SPEED
+        self.speed = 2
 
         self.position = pygame.math.Vector2(position)
         self.shoot_timer = 0
@@ -358,7 +358,7 @@ class Spitter(pygame.sprite.Sprite):
         else:
             self.movement_timer -= 1"""
 
-class Gripper(pygame.sprite.Sprite):
+"""class Gripper(pygame.sprite.Sprite):
     def __init__(self, position):
         super().__init__(enemy_group, all_sprites_group)
         self.image = pygame.image.load("Sprites/Mobs/mob_gripper.png")
@@ -429,7 +429,7 @@ class Gripper(pygame.sprite.Sprite):
             self.image = self.original_image
         
         if self.health == 0:
-            self.kill()
+            self.kill()"""
 
 class Laser(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
@@ -490,11 +490,11 @@ class Acid(pygame.sprite.Sprite):
         self.bullet_movement()
 
 class bulletSpeedPowerUp(pygame.sprite.Sprite):
-    bullet_powerup_image = pygame.image.load('Sprites/Powerups/powerup_gold.png').convert_alpha()
+    """bullet_powerup_image = pygame.image.load('Sprites/Powerups/powerup_gold.png').convert_alpha()
     bullet_powerup_rect = bullet_powerup_image.get_rect()   
     def move_sprite():
         sprite_rect.x = random.randint(0, screen_size[0] - sprite_rect.width)
-        sprite_rect.y = random.randint(0, screen_size[1] - sprite_rect.height)
+        sprite_rect.y = random.randint(0, screen_size[1] - sprite_rect.height)"""
 
 
 
@@ -504,12 +504,13 @@ acid_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 
 player = Player()
-"""spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
-jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
+spitter = Spitter((SPITTER_START_X, SPITTER_START_Y))
+"""jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
 gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 
 
 all_sprites_group.add(player)
+all_sprites_group.add(spitter)
 
 while True:
     keys = pygame.key.get_pressed()
@@ -520,7 +521,8 @@ while True:
 
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
-    player.update()
+    screen.blit(spitter.image, spitter.rect)
+    all_sprites_group.update()
 
     all_sprites_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)

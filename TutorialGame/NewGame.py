@@ -12,6 +12,11 @@ boundary = pygame.Rect(67, 65, 1147, 593)
 pygame.display.set_caption("Top_Down_Shooter")
 clock = pygame.time.Clock()
 
+font = pygame.font.Font("PublicPixel.ttf", 20)
+small_font = pygame.font.Font("PublicPixel.ttf", 15)
+title_font = pygame.font.Font("PublicPixel.ttf", 60)
+score_font = pygame.font.Font("PublicPixel.ttf", 50)
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -484,6 +489,37 @@ class Acid(pygame.sprite.Sprite):
     def update(self):
         self.bullet_movement()
 
+class UI(): 
+    def __init__(self): 
+        self.current_health = 100
+        self.maximum_health = 100
+        self.health_bar_length = 100
+        self.health_ratio = self.maximum_health / self.health_bar_length 
+        self.current_colour = None
+
+    def display_health_bar(self): 
+        pygame.draw.rect(screen, BLACK, (10, 15, self.health_bar_length * 3, 20)) # black
+
+        if self.current_health >= 75:
+            pygame.draw.rect(screen, GREEN, (10, 15, self.current_health * 3, 20)) # green    
+            self.current_colour = GREEN
+        elif self.current_health >= 25:
+            pygame.draw.rect(screen, YELLOW, (10, 15, self.current_health * 3, 20)) # yellow
+            self.current_colour = YELLOW 
+        elif self.current_health >= 0:
+            pygame.draw.rect(screen, RED, (10, 15, self.current_health * 3, 20)) # red 
+            self.current_colour = RED
+
+        pygame.draw.rect(screen, WHITE, (10, 15, self.health_bar_length * 3, 20), 4) # white border
+
+    def display_health_text(self):
+        health_surface = font.render(f"{player.health} / {self.maximum_health}", False, self.current_colour) 
+        health_rect = health_surface.get_rect(center = (410, 25))
+        screen.blit(health_surface, health_rect)
+
+    def update(self): 
+        self.display_health_bar()
+        self.display_health_text()
 
 
 all_sprites_group = pygame.sprite.Group()
@@ -496,6 +532,7 @@ player = Player()
 jumper = Jumper((JUMPER_START_X, JUMPER_START_Y))
 gripper = Gripper((GRIPPER_START_X, GRIPPER_START_Y))"""
 
+ui = UI()
 
 all_sprites_group.add(player)
 
@@ -509,7 +546,7 @@ while True:
     screen.blit(background, (0, 0))
     screen.blit(player.image, player.rect)
     player.update()
-
+    ui.update()
     all_sprites_group.update()
     pygame.draw.rect(screen, "red", player.hitbox_rect, width = 2)
     pygame.draw.rect(screen, "yellow", player.rect, width = 2)

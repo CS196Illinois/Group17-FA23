@@ -1,6 +1,6 @@
 # Settings for game
-WIDTH = 1512 #max is 1512 for M1 Pro (default 1280)
-HEIGHT = 916 #max is 916 for M1 Pro (defauly 720)
+WIDTH = 1280 #max is 1512 for M1 Pro (default 1280)
+HEIGHT = 720 #max is 916 for M1 Pro (defauly 720)
 FPS = 60
 
 MAP_SIZE = 2
