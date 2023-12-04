@@ -98,6 +98,7 @@ enemy_bullets = []  # List to store enemy bullets
 enemy_image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (50,50))
 enemy_size = enemy_image.get_size()
 enemy_speed = 1.5
+enemy_bullet_speed = 5
 enemy_shoot_cooldown = 20
 initial_enemy_position = [random.randint(42, 1190 - enemy_size[0]), random.randint(53,631 - enemy_size[1])]
 enemies = []
@@ -143,8 +144,8 @@ speed_pu_spawn_next = random.randint(10000, 20000)
 speed_pu_active = False
 speed_pu_over = 0
 speed_pu_decay = 5000
-
 def draw_speed_pu(position):
+    speed_pu_image.set_alpha(255)
     screen.blit(speed_pu_image, position)
 
 # Defense Power Up
@@ -158,6 +159,7 @@ defense_pu_over = 0
 defense_pu_decay = 5000
 
 def draw_defense_pu(position):
+    defense_pu_image.set_alpha(255)
     screen.blit(defense_pu_image, position)
 
 # Attack Power Up
@@ -171,6 +173,7 @@ attack_pu_over = 0
 attack_pu_decay = 5000
 
 def draw_attack_pu(position):
+    attack_pu_image.set_alpha(255)
     screen.blit(attack_pu_image, position)
 
 # List to store enemies
@@ -193,9 +196,9 @@ for x in range(num_crates):
 
     # Make sure the player doesn't spawn inside a crate
     if 540 <= crate_pos_x <= 740:
-        crate_pos_x += random.randint(200, 400)
+        crate_pos_x += random.randint(400, 600)
     if 260 <= crate_pos_y <= 460:
-        crate_pos_y += random.randint(200,300)
+        crate_pos_y += random.randint(400,600)
     crates.append((random.randint(42, 1190 - crate_size[0] - 100), random.randint(53, 631 - crate_size[1] - 100)))
 
 def draw_crates(screen, crate_image, crate_positions):
@@ -342,7 +345,8 @@ while running:
     # checking to see if player hits the speed powerup. just used the crate method.
     if is_collision_with_crate(player_pos, speed_pu_pos, speed_pu_size):
         speed_pu_pos = (-100,-100)
-        enemy_speed = 0.25
+        enemy_speed = 0
+        enemy_bullet_speed = 1
         player_speed = 7
         bullet_speed = 40
         speed_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
@@ -353,10 +357,11 @@ while running:
     # If player gets defense power, health increases by random number and player becomes temporarily invincible
     if is_collision_with_crate(player_pos, defense_pu_pos, defense_pu_size):
         defense_pu_pos = (-100,-100)
-        if player_health + 5 >= 100:
+        health_increment = random.randint(5,10)
+        if player_health + health_increment >= 100:
             player_health = 100
         else:
-            player_health += random.randint(5,10)
+            player_health += health_increment
         defense_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
         defense_pu_active = True
         defense_pu_over = current_time + 8000
@@ -379,6 +384,7 @@ while running:
     if current_time >= speed_pu_over:
         player_speed = 5
         enemy_speed = 1.5
+        enemy_bullet_speed = 5
         speed_pu_active = False
 
     if current_time >= defense_pu_over:
@@ -441,8 +447,8 @@ while running:
     for enemy_bullet in enemy_bullets:
         ex, ey, enemy_angle = enemy_bullet
         enemy_bullet_pos = (ex, ey)
-        ex += 5 * math.cos(enemy_angle)
-        ey += 5 * math.sin(enemy_angle)
+        ex += enemy_bullet_speed * math.cos(enemy_angle)
+        ey += enemy_bullet_speed * math.sin(enemy_angle)
 
         # Check collision with crates
         enemy_bullet_hit_crate = any(is_collision(enemy_bullet_pos, enemy_bullet_size, crate_pos, crate_size) for crate_pos in crates)
