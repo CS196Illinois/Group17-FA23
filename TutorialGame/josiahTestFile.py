@@ -10,13 +10,18 @@ pygame.init()
 # Screen dimensions and setup
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background_image = pygame.transform.scale(pygame.image.load('Sprites/Maps/blue.png').convert(), (1280,720))
-boundary = pygame.Rect(42, 60, 1148, 563)
+boundary = pygame.Rect(42, 53, 1148, 563)
 pygame.display.set_caption("Top Down Shooter")
 
 # Load Player
 player_image = pygame.transform.scale(pygame.image.load('Sprites/Characters/character_main.png'), (50,40))
 player_size = player_image.get_size()
 player_health = 100
+
+# Handle music
+pygame.mixer.init()
+pygame.mixer.music.load("Sound/Music/surreal_sippin.mp3")
+pygame.mixer.music.play(-1) # Loop indefinitely
 
 # Fonts
 font = pygame.font.Font("PublicPixel.ttf", 20)
@@ -33,53 +38,73 @@ def draw_player(screen, image, position, angle):
     new_rect = rotated_image.get_rect(center=(position[0] + player_size[0] // 2, position[1] + player_size[1] // 2))
     screen.blit(rotated_image, new_rect.topleft)
 
-# Load other Images
-bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
-
+def draw_enemy(screen, enemy, position):
+    screen.blit(enemy, position)
 
 
 # Player setup
 player_size = player_image.get_size()
 player_pos = [WIDTH//2, HEIGHT//2]
 player_speed = 5
+shoot_cooldown = 0
 
 # Crate setup
 crate_image = pygame.transform.scale(pygame.image.load('Sprites/Crates/crate_yellow.png'),(50,50))
 crate_size = crate_image.get_size()
 
 # Bullet setup
+bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
+spitter_bullet_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
 bullet_size = list(bullet_image.get_size())
 bullets = []
+enemy_bullet_size = list(spitter_bullet_image.get_size())
 enemy_bullets = []  # List to store enemy bullets
 
 # Enemy setup
 enemy_image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (100,100))
 enemy_size = enemy_image.get_size()
-enemy_pos = [random.randint(0, WIDTH-enemy_size[0]), random.randint(0, HEIGHT-enemy_size[1])]
 enemy_speed = 2
-shoot_cooldown = 0
-enemy_shoot_cooldown = 0
+enemy_shoot_cooldown = 20
+initial_enemy_position = [random.randint(0, WIDTH - enemy_size[0]), random.randint(0, HEIGHT - enemy_size[1])]
+enemies = []
 
-enemy_health = 100
+class Enemy:
+    def __init__(self, position):
+        self.image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (100,100))
+        self.pos = list(position)
+        self.size = self.image.get_size()
+        self.health = 10
+        self.shoot_delay = 1000  # Time in milliseconds between shots
+        self.last_shot_time = pygame.time.get_ticks()
 
-def get_angle_to_target(source_pos, target_pos, source_size):
-    dx = target_pos[0] - (source_pos[0] + source_size[0] // 2)
+    def draw(self, screen):
+        screen.blit(self.image, self.pos)
+    
+    def move_enemy(self, player_pos):
+        angle = math.atan2(player_pos[1] - self.pos[1], player_pos[0] - self.pos[0])
+        self.pos[0] += enemy_speed * math.cos(angle)
+        self.pos[1] += enemy_speed * math.sin(angle)
+    
+    def attempt_to_shoot(self, current_time, enemy_bullets):
+        if current_time - self.last_shot_time > self.shoot_delay:
+            self.last_shot_time = current_time
+            bullet_angle = math.atan2(player_pos[1] - self.pos[1], player_pos[0] - self.pos[0])
+            enemy_bullets.append([self.pos[0] + self.size[0] // 2, self.pos[1] + self.size[1] // 2, bullet_angle])
+
+# List to store enemies
+enemies = [Enemy(initial_enemy_position)]  # Add the initial enemy
+
+'''def get_angle_to_target(source_pos, target_pos, source_size):
+    dx = target_pos[0] - (source_pos[0] + source_size[0] // 2)p
     dy = target_pos[1] - (source_pos[1] + source_size[1] // 2)
-    return math.degrees(math.atan2(-dy, dx)) - 90
-
-def draw_rotated_image(screen, image, position, angle, size):
-    rotated_image = pygame.transform.rotate(image, angle)
-    new_rect = rotated_image.get_rect(center=(position[0] + size[0] // 2, position[1] + size[1] // 2))
-    screen.blit(rotated_image, new_rect.topleft)
+    print(math.degrees(math.atan2(-dy, dx)) - 90)
+    return math.degrees(math.atan2(-dy, dx)) - 90'''
 
 def draw_bullet(position):
     screen.blit(bullet_image, position)
 
-def move_enemy(player_pos, enemy_pos):
-    angle = math.atan2(player_pos[1] - enemy_pos[1], player_pos[0] - enemy_pos[0])
-    enemy_pos[0] += enemy_speed * math.cos(angle)
-    enemy_pos[1] += enemy_speed * math.sin(angle)
-    return enemy_pos
+def draw_enemy_bullet(enemy_pos):
+    screen.blit(spitter_bullet_image, enemy_pos)
 
 num_crates = 15  # Number of crates
 crates = [(random.randint(100, WIDTH - crate_size[0] - 100), random.randint(100, HEIGHT - crate_size[1] - 100)) for _ in range(num_crates)]
@@ -87,9 +112,6 @@ crates = [(random.randint(100, WIDTH - crate_size[0] - 100), random.randint(100,
 def draw_crates(screen, crate_image, crate_positions):
     for pos in crate_positions:
         screen.blit(crate_image, pos)
-
-def draw_crate(position):
-    screen.blit(crate_image, position)
 
 def is_collision_with_crate(new_player_pos, crate_pos, crate_size):
     player_rect = pygame.Rect(new_player_pos, player_size)
@@ -152,10 +174,19 @@ ui = UI()
 # Game loop
 running = True
 clock = pygame.time.Clock()
+ENEMY_SPAWN = pygame.USEREVENT + 2
+enemy_spawn_time = 5000
+pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
 while running:
+    current_time = pygame.time.get_ticks()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == ENEMY_SPAWN:
+            new_enemy_pos = (random.randint(0, WIDTH - enemy_size[0]), random.randint(0, HEIGHT - enemy_size[1]))
+            enemies.append(Enemy(new_enemy_pos))
+
+    enemy_spawn_time *= 0.5
 
     keys = pygame.key.get_pressed()
     mx, my = pygame.mouse.get_pos()
@@ -186,29 +217,24 @@ while running:
     if not any(is_collision_with_crate(new_player_pos, crate, crate_size) for crate in crates):
         player_pos = new_player_pos
 
-    # Keep player in screen bounds
+    # setting widths and heights of players for collision checking
     player_width, player_height = player_size
+    enemy_width, enemy_height = enemy_size
 
     if shoot_cooldown > 0:
         shoot_cooldown -= 1
+    
+    if enemy_shoot_cooldown > 0:
+        enemy_shoot_cooldown -= 1
 
     # Shooting bullets
     if keys[pygame.K_SPACE]:
         if shoot_cooldown == 0:
-            shoot_cooldown = PLAYER_SHOOT_COOLDOWN
+            shoot_cooldown = SHOOT_COOLDOWN
             player_center_x = player_pos[0] + player_width // 2
             player_center_y = player_pos[1] + player_height // 2
             bullet_angle = math.atan2(my - player_center_y, mx - player_center_x)
             bullets.append([player_center_x, player_center_y, bullet_angle])
-
-    # Enemy bullets
-    if enemy_shoot_cooldown == 0:
-        enemy_shoot_cooldown = 3000
-        ex, ey = enemy_pos
-        player_center_x = player_pos[0] + player_size[0] // 2
-        player_center_y = player_pos[1] + player_size[1] // 2
-        enemy_bullet_angle = get_angle_to_target(enemy_pos, (player_center_x, player_center_y), enemy_size)
-        enemy_bullets.append([ex + enemy_size[0] // 2, ey + enemy_size[1] // 2, enemy_bullet_angle])
 
     # Update bullet positions
     new_bullets = []
@@ -222,74 +248,61 @@ while running:
         bullet_hit_crate = any(is_collision(bullet_pos, bullet_size, crate_pos, crate_size) for crate_pos in crates)
 
         # Check collision with enemy
-        bullet_hit_enemy = is_collision((bx, by), bullet_size, enemy_pos, enemy_size)
-        if bullet_hit_enemy:
-            enemy_health -= 10  # Adjust damage value as needed
-            if enemy_health <= 0:
-                # Handle enemy defeat (e.g., respawn, increase score)
-                pass
-        else:
-            new_bullets.append(bullet)
+        bullet_hit_enemy = False
+        for enemy in enemies:
+            if is_collision(bullet_pos, bullet_size, enemy.pos, enemy.size):
+                bullet_hit_enemy = True
+                enemy.health -= 10
+                if enemy.health <= 0:
+                    # Handle enemy defeat (e.g., remove from list, increase score)
+                    enemies.remove(enemy)
+                    print("enemy killed!")
+                break
 
         # Remove bullet if it hits a crate or the enemy, or if it goes off-screen
         if not bullet_hit_crate and not bullet_hit_enemy and 0 <= bx <= WIDTH and 0 <= by <= HEIGHT:
             new_bullets.append([bx, by, angle])
-        if bullet_hit_enemy:
-            # Handle enemy hit (e.g., respawn enemy, increase score, etc.)
-            enemy_pos = [random.randint(0, WIDTH - enemy_size[0]), random.randint(0, HEIGHT - enemy_size[1])]
     bullets = new_bullets
-    
-    # Update enemy bullets
+
     new_enemy_bullets = []
-    for enemy_bullet in new_enemy_bullets:
-        ex, ey, angle = enemy_bullet
+    for enemy_bullet in enemy_bullets:
+        ex, ey, enemy_angle = enemy_bullet
         enemy_bullet_pos = (ex, ey)
-        ex += 10 * math.cos(angle)
-        ey += 10 * math.sin(angle)
+        ex += 2 * math.cos(enemy_angle)
+        ey += 2 * math.sin(enemy_angle)
+
         # Check collision with crates
-        bullet_hit_crate = any(is_collision(enemy_bullet_pos, bullet_size, crate_pos, crate_size) for crate_pos in crates)
+        enemy_bullet_hit_crate = any(is_collision(enemy_bullet_pos, enemy_bullet_size, crate_pos, crate_size) for crate_pos in crates)
 
-        # Check collision with olayer
-        bullet_hit_player = is_collision((ex, ey), bullet_size, player_pos, player_size)
-        if bullet_hit_player:
-            player_health -= 10  # Adjust damage value as needed
-            if player_health <= 0:
-                # Handle player defeat (e.g., game over logic)
-                pass
-        else:
-            new_enemy_bullets.append(enemy_bullet)
+        # Check collision with player
+        enemy_bullet_hit_player = is_collision(enemy_bullet_pos, enemy_bullet_size, player_pos, player_size)
 
-        # Remove bullet if it hits a crate or the enemy, or if it goes off-screen
-        if not bullet_hit_crate and not bullet_hit_player and 0 <= ex <= WIDTH and 0 <= ey <= HEIGHT:
-            new_enemy_bullets.append([ex, ey, angle])
-        if bullet_hit_player:
-            # Handle enemy hit (e.g., respawn enemy, increase score, etc.)
+        # Remove bullet if it hits a crate or the player, or if it goes off-screen
+        if not enemy_bullet_hit_crate and not enemy_bullet_hit_player and 0 <= ex <= WIDTH and 0 <= ey <= HEIGHT:
+            new_enemy_bullets.append([ex, ey, enemy_angle])
+        if enemy_bullet_hit_player:
             player_health -= 1
     enemy_bullets = new_enemy_bullets
-
-    # Move enemy
-    enemy_pos = move_enemy(player_pos, enemy_pos)
 
     # Drawing
     screen.blit(background_image, (0, 0))  # Draw the background image
 
-    # Draw and rotate enemy to face player
-    enemy_angle = get_angle_to_target(enemy_pos, player_pos, enemy_size)
-    draw_rotated_image(screen, enemy_image, enemy_pos, enemy_angle, enemy_size)
-
     # Calculate rotation angle and draw player
     player_angle = get_angle_to_mouse(player_pos, (mx, my))
-    ui.update()
+
     draw_player(screen, player_image, player_pos, player_angle)
     draw_crates(screen, crate_image, crates)
-
-    # Drawing enemy bullets
     for bullet in bullets:
         draw_bullet((int(bullet[0]) - 29, int(bullet[1]) - 30))
-    for bullet in enemy_bullets:
-        draw_bullet((int(bullet[0]), int(bullet[1])))
+    for enemy_bullet in enemy_bullets:
+        draw_enemy_bullet((int(enemy_bullet[0]) - 29, int(enemy_bullet[1]) - 30))
+    for enemy in enemies:
+        enemy.move_enemy(player_pos)
+        enemy.draw(screen)
+        enemy.attempt_to_shoot(current_time, enemy_bullets)
+    
+    ui.update()
     pygame.display.flip()
-
     clock.tick(60)
 
 pygame.quit()
