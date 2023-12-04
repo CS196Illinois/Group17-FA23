@@ -1,4 +1,5 @@
 import pygame
+import time
 import sys
 from sys import exit
 import math
@@ -10,18 +11,21 @@ pygame.init()
 # Screen dimensions and setup
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 background_image = pygame.transform.scale(pygame.image.load('Sprites/Maps/blue.png').convert(), (1280,720))
-boundary = pygame.Rect(42, 53, 1148, 563)
+boundary = pygame.Rect(42, 53, 1148, 578)
 pygame.display.set_caption("Top Down Shooter")
 
 # Load Player
 player_image = pygame.transform.scale(pygame.image.load('Sprites/Characters/character_main.png'), (50,40))
 player_size = player_image.get_size()
 player_health = 100
+bullet_damage = 1
 
 # Handle music
 pygame.mixer.init()
 pygame.mixer.music.load("Sound/Music/surreal_sippin.mp3")
 pygame.mixer.music.play(-1) # Loop indefinitely
+laser_sound = pygame.mixer.Sound('Sound/SFX/blaster.mp3')
+
 
 # Fonts
 font = pygame.font.Font("PublicPixel.ttf", 20)
@@ -41,6 +45,29 @@ def draw_player(screen, image, position, angle):
 def draw_enemy(screen, enemy, position):
     screen.blit(enemy, position)
 
+# Game Over
+def gameover():
+    gameover = True
+    s = pygame.Surface((WIDTH,HEIGHT), pygame.SRCALPHA)   # per-pixel alpha
+    s.fill((0, 0, 0, 128))                         # notice the alpha value in the color
+    screen.blit(s, (0,0))
+    volume = 1.0
+    while gameover:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+                
+        
+        text_gameover = font.render(f"GAME OVER", True, RED)
+        screen.blit(text_gameover, (WIDTH / 2 - 80, HEIGHT / 2 - 10))
+        volume *= 0.97
+        pygame.mixer.music.set_volume(volume)
+
+        pygame.display.update()
+        clock.tick(60)  # Maintain a consistent framerate even in pause
+
+
 
 # Player setup
 player_size = player_image.get_size()
@@ -53,15 +80,15 @@ crate_image = pygame.transform.scale(pygame.image.load('Sprites/Crates/crate_yel
 crate_size = crate_image.get_size()
 
 # Bullet setup
-bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
-spitter_bullet_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
+bullet_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
+spitter_bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
 bullet_size = list(bullet_image.get_size())
 bullets = []
 enemy_bullet_size = list(spitter_bullet_image.get_size())
 enemy_bullets = []  # List to store enemy bullets
 
 # Enemy setup
-enemy_image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (100,100))
+enemy_image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (50,50))
 enemy_size = enemy_image.get_size()
 enemy_speed = 2
 enemy_shoot_cooldown = 20
@@ -70,15 +97,24 @@ enemies = []
 
 class Enemy:
     def __init__(self, position):
-        self.image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (100,100))
+        self.image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (45,35))
         self.pos = list(position)
         self.size = self.image.get_size()
         self.health = 10
-        self.shoot_delay = 1000  # Time in milliseconds between shots
+        self.shoot_delay = 500  # Time in milliseconds between shots
         self.last_shot_time = pygame.time.get_ticks()
+        self.transparency = 255  # Max transparency
 
     def draw(self, screen):
+        self.image.set_alpha(self.transparency)
         screen.blit(self.image, self.pos)
+
+    def take_damage(self):
+        self.health -= 1
+        self.transparency = max(0, self.transparency - 25)  # Reduce transparency by 10% of 255
+        if self.health <= 0:
+            return True
+        return False
     
     def move_enemy(self, player_pos):
         angle = math.atan2(player_pos[1] - self.pos[1], player_pos[0] - self.pos[0])
@@ -93,12 +129,9 @@ class Enemy:
 
 # List to store enemies
 enemies = [Enemy(initial_enemy_position)]  # Add the initial enemy
-
-'''def get_angle_to_target(source_pos, target_pos, source_size):
-    dx = target_pos[0] - (source_pos[0] + source_size[0] // 2)p
-    dy = target_pos[1] - (source_pos[1] + source_size[1] // 2)
-    print(math.degrees(math.atan2(-dy, dx)) - 90)
-    return math.degrees(math.atan2(-dy, dx)) - 90'''
+for x in range(5):
+    new_enemy_pos = (random.randint(0, WIDTH - enemy_size[0]), random.randint(0, HEIGHT - enemy_size[1]))
+    enemies.append(Enemy(new_enemy_pos))
 
 def draw_bullet(position):
     screen.blit(bullet_image, position)
@@ -143,7 +176,7 @@ class UI():
         pygame.draw.rect(screen, BLACK, (50, 58, self.health_bar_length * 3, 20)) # black
 
         if self.current_health >= 75:
-            pygame.draw.rect(screen, GREEN, (50, 58, self.current_health * 3, 20)) # green    
+            pygame.draw.rect(screen, GREEN, (50, 58, self.current_health * 3 * self.health_ratio, 20)) # green    
             self.current_colour = GREEN
         elif self.current_health >= 25:
             pygame.draw.rect(screen, YELLOW, (50, 58, self.current_health * 3, 20)) # yellow
@@ -159,12 +192,16 @@ class UI():
         health_rect = health_surface.get_rect(center = (423, 67))
         screen.blit(health_surface, health_rect)
 
+    def adjust_health(self, player_health):
+        self.current_health = player_health
+
     def display_powerups(self):
         text_powerups = font.render(f"Powerup", True, WHITE)
-        screen.blit(text_powerups, (1120, 15))
-        pygame.draw.rect(screen, WHITE, (1160, 40, 80, 80), 4) 
+        screen.blit(text_powerups, (1000, 80))
+        pygame.draw.rect(screen, WHITE, (1151, 55, 80, 80), 4) 
 
-    def update(self): 
+    def update(self, player_health): 
+        self.adjust_health(player_health)
         self.display_health_bar()
         self.display_health_text()
         self.display_powerups()
@@ -175,7 +212,9 @@ ui = UI()
 running = True
 clock = pygame.time.Clock()
 ENEMY_SPAWN = pygame.USEREVENT + 2
-enemy_spawn_time = 5000
+GAME_OVER = pygame.USEREVENT + 2
+enemy_spawn_time = 3000  # Initial spawn time in milliseconds (e.g., 5000 ms = 5 seconds)
+min_enemy_spawn_time = 1000  # Minimum spawn time in milliseconds
 pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
 while running:
     current_time = pygame.time.get_ticks()
@@ -183,11 +222,14 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == ENEMY_SPAWN:
+            # Creates a new enemy at a random spot in the map
             new_enemy_pos = (random.randint(0, WIDTH - enemy_size[0]), random.randint(0, HEIGHT - enemy_size[1]))
             enemies.append(Enemy(new_enemy_pos))
 
-    enemy_spawn_time *= 0.5
-
+            # Reduce spawn time for next enemy, respecting the minimum limit
+            enemy_spawn_time = max(min_enemy_spawn_time, (int)(enemy_spawn_time * 0.99))
+            pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
+    
     keys = pygame.key.get_pressed()
     mx, my = pygame.mouse.get_pos()
 
@@ -231,6 +273,7 @@ while running:
     if keys[pygame.K_SPACE]:
         if shoot_cooldown == 0:
             shoot_cooldown = SHOOT_COOLDOWN
+            laser_sound.play()
             player_center_x = player_pos[0] + player_width // 2
             player_center_y = player_pos[1] + player_height // 2
             bullet_angle = math.atan2(my - player_center_y, mx - player_center_x)
@@ -252,11 +295,9 @@ while running:
         for enemy in enemies:
             if is_collision(bullet_pos, bullet_size, enemy.pos, enemy.size):
                 bullet_hit_enemy = True
-                enemy.health -= 10
-                if enemy.health <= 0:
-                    # Handle enemy defeat (e.g., remove from list, increase score)
+                enemy.health -= bullet_damage
+                if enemy.take_damage():
                     enemies.remove(enemy)
-                    print("enemy killed!")
                 break
 
         # Remove bullet if it hits a crate or the enemy, or if it goes off-screen
@@ -268,8 +309,8 @@ while running:
     for enemy_bullet in enemy_bullets:
         ex, ey, enemy_angle = enemy_bullet
         enemy_bullet_pos = (ex, ey)
-        ex += 2 * math.cos(enemy_angle)
-        ey += 2 * math.sin(enemy_angle)
+        ex += 5 * math.cos(enemy_angle)
+        ey += 5 * math.sin(enemy_angle)
 
         # Check collision with crates
         enemy_bullet_hit_crate = any(is_collision(enemy_bullet_pos, enemy_bullet_size, crate_pos, crate_size) for crate_pos in crates)
@@ -281,7 +322,8 @@ while running:
         if not enemy_bullet_hit_crate and not enemy_bullet_hit_player and 0 <= ex <= WIDTH and 0 <= ey <= HEIGHT:
             new_enemy_bullets.append([ex, ey, enemy_angle])
         if enemy_bullet_hit_player:
-            player_health -= 1
+            if player_health - 1 >= 0:
+                player_health -= 1
     enemy_bullets = new_enemy_bullets
 
     # Drawing
@@ -301,8 +343,12 @@ while running:
         enemy.draw(screen)
         enemy.attempt_to_shoot(current_time, enemy_bullets)
     
-    ui.update()
+    ui.update(player_health)
     pygame.display.flip()
+
+    # Game Over
+    if player_health <= 0:
+        gameover()
     clock.tick(60)
 
 pygame.quit()
