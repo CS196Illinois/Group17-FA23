@@ -85,9 +85,9 @@ crate_size = crate_image.get_size()
 
 # Bullet setup
 bullet_normal_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
-bullet_power_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
+bullet_power_image = pygame.image.load('Sprites/Bullets/bullet_power.png')
 bullet_image = bullet_normal_image
-spitter_bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
+spitter_bullet_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
 bullet_size = list(bullet_image.get_size())
 bullet_speed = 7
 bullets = []
@@ -195,10 +195,10 @@ for x in range(num_crates):
     crate_pos_y = random.randint(53, 631 - crate_size[1] - 100)
 
     # Make sure the player doesn't spawn inside a crate
-    if 590 <= crate_pos_x <= 690:
-        crate_pos_x += 200
-    if 310 <= crate_pos_y <= 410:
-        crate_pos_y += 200
+    while 590 <= crate_pos_x <= 690:
+        crate_pos_x = random.randint(42, 1190 - crate_size[0] - 100)
+    while 310 <= crate_pos_y <= 410:
+        crate_pos_y = random.randint(53, 631 - crate_size[1] - 100)
     crates.append((crate_pos_x, crate_pos_y))
 
 def draw_crates(screen, crate_image, crate_positions):
