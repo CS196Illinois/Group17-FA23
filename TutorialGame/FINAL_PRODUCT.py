@@ -196,9 +196,9 @@ for x in range(num_crates):
 
     # Make sure the player doesn't spawn inside a crate
     if 540 <= crate_pos_x <= 740:
-        crate_pos_x += random.randint(400, 600)
+        crate_pos_x = random.randint(80, 500)
     if 260 <= crate_pos_y <= 460:
-        crate_pos_y += random.randint(400,600)
+        crate_pos_y = random.randint(70, 220)
     crates.append((random.randint(42, 1190 - crate_size[0] - 100), random.randint(53, 631 - crate_size[1] - 100)))
 
 def draw_crates(screen, crate_image, crate_positions):
