@@ -345,9 +345,9 @@ while running:
     # checking to see if player hits the speed powerup. just used the crate method.
     if is_collision_with_crate(player_pos, speed_pu_pos, speed_pu_size):
         speed_pu_pos = (-100,-100)
-        enemy_speed = 0
+        enemy_speed = 0.1
         enemy_bullet_speed = 1
-        player_speed = 7
+        player_speed = 8
         bullet_speed = 40
         speed_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
         speed_pu_active = True
