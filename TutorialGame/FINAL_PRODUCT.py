@@ -195,11 +195,11 @@ for x in range(num_crates):
     crate_pos_y = random.randint(53, 631 - crate_size[1] - 100)
 
     # Make sure the player doesn't spawn inside a crate
-    if 540 <= crate_pos_x <= 740:
-        crate_pos_x = random.randint(80, 500)
-    if 260 <= crate_pos_y <= 460:
-        crate_pos_y = random.randint(70, 220)
-    crates.append((random.randint(42, 1190 - crate_size[0] - 100), random.randint(53, 631 - crate_size[1] - 100)))
+    if 590 <= crate_pos_x <= 690:
+        crate_pos_x += 200
+    if 310 <= crate_pos_y <= 410:
+        crate_pos_y += 200
+    crates.append((crate_pos_x, crate_pos_y))
 
 def draw_crates(screen, crate_image, crate_positions):
     for pos in crate_positions:
