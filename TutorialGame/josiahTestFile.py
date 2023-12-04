@@ -22,10 +22,13 @@ bullet_damage = 1
 
 # Handle music
 pygame.mixer.init()
+pygame.mixer.set_num_channels(3)  # default is 8s
 pygame.mixer.music.load("Sound/Music/surreal_sippin.mp3")
 pygame.mixer.music.play(-1) # Loop indefinitely
 laser_sound = pygame.mixer.Sound('Sound/SFX/blaster.mp3')
-
+laser_sound.set_volume(0.25)
+death_sound = pygame.mixer.Sound('Sound/SFX/yoda.mp3')
+enemy_death = pygame.mixer.Sound('Sound/SFX/splat.mp3')
 
 # Fonts
 font = pygame.font.Font("PublicPixel.ttf", 20)
@@ -126,6 +129,17 @@ class Enemy:
             self.last_shot_time = current_time
             bullet_angle = math.atan2(player_pos[1] - self.pos[1], player_pos[0] - self.pos[0])
             enemy_bullets.append([self.pos[0] + self.size[0] // 2, self.pos[1] + self.size[1] // 2, bullet_angle])
+
+class SpeedPowerUp:
+    def __init__(self, position):
+        self.pos = position
+        self.image = pygame.image.load('Sprites/Powerups/powerup_gold.png')
+        self.size = self.image.get_size()
+    
+    def draw(self):
+        screen.blit(self.image, self.pos)
+
+    
 
 # List to store enemies
 enemies = [Enemy(initial_enemy_position)]  # Add the initial enemy
@@ -273,7 +287,7 @@ while running:
     if keys[pygame.K_SPACE]:
         if shoot_cooldown == 0:
             shoot_cooldown = SHOOT_COOLDOWN
-            laser_sound.play()
+            pygame.mixer.Channel(1).play(laser_sound)
             player_center_x = player_pos[0] + player_width // 2
             player_center_y = player_pos[1] + player_height // 2
             bullet_angle = math.atan2(my - player_center_y, mx - player_center_x)
@@ -297,6 +311,7 @@ while running:
                 bullet_hit_enemy = True
                 enemy.health -= bullet_damage
                 if enemy.take_damage():
+                    pygame.mixer.Channel(0).play(enemy_death)
                     enemies.remove(enemy)
                 break
 
@@ -348,6 +363,7 @@ while running:
 
     # Game Over
     if player_health <= 0:
+        pygame.mixer.Channel(2).play(death_sound)
         gameover()
     clock.tick(60)
 
