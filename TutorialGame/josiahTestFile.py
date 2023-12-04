@@ -19,6 +19,7 @@ player_image = pygame.transform.scale(pygame.image.load('Sprites/Characters/char
 player_size = player_image.get_size()
 player_health = 100
 bullet_damage = 1
+player_score = 0
 
 # Handle music
 pygame.mixer.init()
@@ -83,9 +84,12 @@ crate_image = pygame.transform.scale(pygame.image.load('Sprites/Crates/crate_yel
 crate_size = crate_image.get_size()
 
 # Bullet setup
-bullet_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
+bullet_normal_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
+bullet_power_image = pygame.image.load('Sprites/Bullets/bullet_acidspit.png')
+bullet_image = bullet_normal_image
 spitter_bullet_image = pygame.image.load('Sprites/Bullets/bullet_laser.png')
 bullet_size = list(bullet_image.get_size())
+bullet_speed = 7
 bullets = []
 enemy_bullet_size = list(spitter_bullet_image.get_size())
 enemy_bullets = []  # List to store enemy bullets
@@ -93,7 +97,7 @@ enemy_bullets = []  # List to store enemy bullets
 # Enemy setup
 enemy_image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter.png'), (50,50))
 enemy_size = enemy_image.get_size()
-enemy_speed = 2
+enemy_speed = 1.5
 enemy_shoot_cooldown = 20
 initial_enemy_position = [random.randint(42, 1190 - enemy_size[0]), random.randint(53,631 - enemy_size[1])]
 enemies = []
@@ -130,16 +134,44 @@ class Enemy:
             bullet_angle = math.atan2(player_pos[1] - self.pos[1], player_pos[0] - self.pos[0])
             enemy_bullets.append([self.pos[0] + self.size[0] // 2, self.pos[1] + self.size[1] // 2, bullet_angle])
 
-class SpeedPowerUp:
-    def __init__(self, position):
-        self.pos = position
-        self.image = pygame.image.load('Sprites/Powerups/powerup_gold.png')
-        self.size = self.image.get_size()
-    
-    def draw(self):
-        screen.blit(self.image, self.pos)
+# Speed Power Up
 
-    
+speed_pu_image = pygame.transform.scale(pygame.image.load('Sprites/Powerups/powerup_gold.png'), (115,115))
+speed_pu_size = speed_pu_image.get_size()
+speed_pu_pos = (-100,-100)
+speed_pu_spawn_next = random.randint(10000, 20000)
+speed_pu_active = False
+speed_pu_over = 0
+speed_pu_decay = 5000
+
+def draw_speed_pu(position):
+    screen.blit(speed_pu_image, position)
+
+# Defense Power Up
+
+defense_pu_image = pygame.transform.scale(pygame.image.load('Sprites/Powerups/powerup_green.png'), (115,115))
+defense_pu_size = defense_pu_image.get_size()
+defense_pu_pos = (-100,-100)
+defense_pu_spawn_next = random.randint(10000, 20000)
+defense_pu_active = False
+defense_pu_over = 0
+defense_pu_decay = 5000
+
+def draw_defense_pu(position):
+    screen.blit(defense_pu_image, position)
+
+# Attack Power Up
+
+attack_pu_image = pygame.transform.scale(pygame.image.load('Sprites/Powerups/powerup_red.png'), (115,115))
+attack_pu_size = attack_pu_image.get_size()
+attack_pu_pos = (-100,-100)
+attack_pu_spawn_next = random.randint(10000, 20000)
+attack_pu_active = False
+attack_pu_over = 0
+attack_pu_decay = 5000
+
+def draw_attack_pu(position):
+    screen.blit(attack_pu_image, position)
 
 # List to store enemies
 enemies = [Enemy(initial_enemy_position)]  # Add the initial enemy
@@ -154,7 +186,17 @@ def draw_enemy_bullet(enemy_pos):
     screen.blit(spitter_bullet_image, enemy_pos)
 
 num_crates = 15  # Number of crates
-crates = [(random.randint(42, 1190 - crate_size[0] - 100), random.randint(53, 631 - crate_size[1] - 100)) for _ in range(num_crates)]
+crates = []
+for x in range(num_crates):
+    crate_pos_x = random.randint(42, 1190 - crate_size[0] - 100)
+    crate_pos_y = random.randint(53, 631 - crate_size[1] - 100)
+
+    # Make sure the player doesn't spawn inside a crate
+    if 540 <= crate_pos_x <= 740:
+        crate_pos_x += random.randint(200, 400)
+    if 260 <= crate_pos_y <= 460:
+        crate_pos_y += random.randint(200,300)
+    crates.append((random.randint(42, 1190 - crate_size[0] - 100), random.randint(53, 631 - crate_size[1] - 100)))
 
 def draw_crates(screen, crate_image, crate_positions):
     for pos in crate_positions:
@@ -185,6 +227,7 @@ class UI():
         self.health_bar_length = 100
         self.health_ratio = self.maximum_health / self.health_bar_length 
         self.current_colour = None
+        self.current_score = 0
 
     def display_health_bar(self): 
         pygame.draw.rect(screen, BLACK, (50, 58, self.health_bar_length * 3, 20)) # black
@@ -206,18 +249,37 @@ class UI():
         health_rect = health_surface.get_rect(center = (423, 67))
         screen.blit(health_surface, health_rect)
 
+    def display_score(self):
+        score_surface = font.render(f"Score: {player_score}", False, GREEN)
+        score_rect = score_surface.get_rect(center = (1135, 650))
+        screen.blit(score_surface, score_rect)
+
     def adjust_health(self, player_health):
         self.current_health = player_health
 
-    def display_powerups(self):
-        text_powerups = font.render(f"Powerup", True, WHITE)
-        screen.blit(text_powerups, (1000, 80))
-        pygame.draw.rect(screen, WHITE, (1151, 55, 80, 80), 4) 
+    def adjust_score(self, player_score):
+        self.current_score = player_score
 
-    def update(self, player_health): 
+    def display_powerups(self):
+        text_powerups = font.render(f"Powerups", True, WHITE)
+        screen.blit(text_powerups, (1065, 55))
+        pygame.draw.rect(screen, WHITE, (1151, 85, 80, 240), 4) 
+        if speed_pu_active:
+            speed_pu_image.set_alpha(170)
+            screen.blit(speed_pu_image, (1131,70))
+        if defense_pu_active:
+            defense_pu_image.set_alpha(170)
+            screen.blit(defense_pu_image, (1131,143))
+        if attack_pu_active:
+            attack_pu_image.set_alpha(170)
+            screen.blit(attack_pu_image, (1131,216))
+
+    def update(self, player_health, player_score): 
         self.adjust_health(player_health)
+        self.adjust_score(player_score)
         self.display_health_bar()
         self.display_health_text()
+        self.display_score()
         self.display_powerups()
 
 ui = UI()
@@ -230,8 +292,6 @@ GAME_OVER = pygame.USEREVENT + 2
 enemy_spawn_time = 3000  # Initial spawn time in milliseconds (e.g., 5000 ms = 5 seconds)
 min_enemy_spawn_time = 1000  # Minimum spawn time in milliseconds
 pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
-SPEED_PU_SPAWN = pygame.USEREVENT + 2
-pygame.time.set_timer(SPEED_PU_SPAWN, 5000)
 while running:
     current_time = pygame.time.get_ticks()
     for event in pygame.event.get():
@@ -243,11 +303,8 @@ while running:
             enemies.append(Enemy(new_enemy_pos))
 
             # Reduce spawn time for next enemy, respecting the minimum limit
-            enemy_spawn_time = max(min_enemy_spawn_time, (int)(enemy_spawn_time * 0.99))
+            enemy_spawn_time = max(min_enemy_spawn_time, (int)(enemy_spawn_time * 0.95))
             pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
-        if running == True and event.type == SPEED_PU_SPAWN:
-            speed_pu_pos = [random.randint(42, 1090), random.randint(53,531)]
-            SpeedPowerUp()
     
     keys = pygame.key.get_pressed()
     mx, my = pygame.mouse.get_pos()
@@ -282,16 +339,70 @@ while running:
     player_width, player_height = player_size
     enemy_width, enemy_height = enemy_size
 
+    # checking to see if player hits the speed powerup. just used the crate method.
+    if is_collision_with_crate(player_pos, speed_pu_pos, speed_pu_size):
+        speed_pu_pos = (-100,-100)
+        enemy_speed = 0.25
+        player_speed = 7
+        bullet_speed = 40
+        speed_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+        speed_pu_active = True
+        speed_pu_over = current_time + 8000
+        speed_pu_decay = 0
+
+    # If player gets defense power, health increases by random number and player becomes temporarily invincible
+    if is_collision_with_crate(player_pos, defense_pu_pos, defense_pu_size):
+        defense_pu_pos = (-100,-100)
+        if player_health + 5 >= 100:
+            player_health = 100
+        else:
+            player_health += random.randint(5,10)
+        defense_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+        defense_pu_active = True
+        defense_pu_over = current_time + 8000
+        defense_pu_decay = 0
+
+    # If player gets attack powerup, bullet damage increases to 2 shot enemies and bullet_image changes
+
+    if is_collision_with_crate(player_pos, attack_pu_pos, attack_pu_size):
+        attack_pu_pos = (-100,-100)
+        bullet_damage = 5
+        bullet_speed = 20
+        shoot_cooldown = 6
+        bullet_image = bullet_power_image
+        attack_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+        attack_pu_active = True
+        attack_pu_over = current_time + 8000
+        attack_pu_decay = 0
+
+    # Checking to see if active powerups are over
+    if current_time >= speed_pu_over:
+        player_speed = 5
+        enemy_speed = 1.5
+        speed_pu_active = False
+
+    if current_time >= defense_pu_over:
+        defense_pu_active = False
+
+    if current_time >= attack_pu_over:
+        bullet_image = bullet_normal_image
+        bullet_damage = 1
+        attack_pu_active = False
+
+    # Shooting bullets
+
     if shoot_cooldown > 0:
         shoot_cooldown -= 1
     
     if enemy_shoot_cooldown > 0:
         enemy_shoot_cooldown -= 1
 
-    # Shooting bullets
     if keys[pygame.K_SPACE]:
         if shoot_cooldown == 0:
-            shoot_cooldown = SHOOT_COOLDOWN
+            if attack_pu_active: 
+                shoot_cooldown = 6
+            else:
+                shoot_cooldown = SHOOT_COOLDOWN
             pygame.mixer.Channel(1).play(laser_sound)
             player_center_x = player_pos[0] + player_width // 2
             player_center_y = player_pos[1] + player_height // 2
@@ -303,8 +414,8 @@ while running:
     for bullet in bullets:
         bx, by, angle = bullet
         bullet_pos = (bx, by)
-        bx += 10 * math.cos(angle)
-        by += 10 * math.sin(angle)
+        bx += bullet_speed * math.cos(angle)
+        by += bullet_speed * math.sin(angle)
         
         # Check collision with crates
         bullet_hit_crate = any(is_collision(bullet_pos, bullet_size, crate_pos, crate_size) for crate_pos in crates)
@@ -317,6 +428,7 @@ while running:
                 enemy.health -= bullet_damage
                 if enemy.take_damage():
                     pygame.mixer.Channel(0).play(enemy_death)
+                    player_score += 10
                     enemies.remove(enemy)
                 break
 
@@ -342,18 +454,50 @@ while running:
         if not enemy_bullet_hit_crate and not enemy_bullet_hit_player and 0 <= ex <= WIDTH and 0 <= ey <= HEIGHT:
             new_enemy_bullets.append([ex, ey, enemy_angle])
         if enemy_bullet_hit_player:
-            if player_health - 1 >= 0:
+            if player_health - 1 >= 0 and not defense_pu_active:
                 player_health -= 1
     enemy_bullets = new_enemy_bullets
 
-    # Drawing
+    # Drawing Background
     screen.blit(background_image, (0, 0))  # Draw the background image
+
+    # Testing to see if the powerup hasn't been collected for 5 seconds
+    if current_time >= speed_pu_decay and speed_pu_pos[0] > -90:
+        speed_pu_pos = (-100,-100)
+        speed_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+    
+    if current_time >= defense_pu_decay and defense_pu_pos[0] > -90:
+        defense_pu_pos = (-100,-100)
+        defense_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+    
+    if current_time >= attack_pu_decay and attack_pu_pos[0] > -90:
+        attack_pu_pos = (-100,-100)
+        attack_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+
+    # Testing to see if it's time to spawn a new powerup
+    if current_time >= speed_pu_spawn_next:
+        speed_pu_decay = current_time + 5000
+        speed_pu_pos = (random.randint(42, 1190 - speed_pu_size[0] - 100), random.randint(53, 631 - speed_pu_size[1] - 100))
+        speed_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+    
+    if current_time >= defense_pu_spawn_next:
+        defense_pu_decay = current_time + 5000
+        defense_pu_pos = (random.randint(42, 1190 - defense_pu_size[0] - 100), random.randint(53, 631 - defense_pu_size[1] - 100))
+        defense_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
+
+    if current_time >= attack_pu_spawn_next:
+        attack_pu_decay = current_time + 5000
+        attack_pu_pos = (random.randint(42, 1190 - attack_pu_size[0] - 100), random.randint(53, 631 - attack_pu_size[1] - 100))
+        attack_pu_spawn_next = random.randint(current_time + 10000, current_time + 20000)
 
     # Calculate rotation angle and draw player
     player_angle = get_angle_to_mouse(player_pos, (mx, my))
 
     draw_player(screen, player_image, player_pos, player_angle)
     draw_crates(screen, crate_image, crates)
+    draw_speed_pu(speed_pu_pos)
+    draw_defense_pu(defense_pu_pos)
+    draw_attack_pu(attack_pu_pos)
     for bullet in bullets:
         draw_bullet((int(bullet[0]) - 29, int(bullet[1]) - 30))
     for enemy_bullet in enemy_bullets:
@@ -363,7 +507,7 @@ while running:
         enemy.draw(screen)
         enemy.attempt_to_shoot(current_time, enemy_bullets)
     
-    ui.update(player_health)
+    ui.update(player_health, player_score)
     pygame.display.flip()
 
     # Game Over
