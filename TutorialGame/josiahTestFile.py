@@ -95,7 +95,7 @@ enemy_image = pygame.transform.scale(pygame.image.load('Sprites/Mobs/mob_spitter
 enemy_size = enemy_image.get_size()
 enemy_speed = 2
 enemy_shoot_cooldown = 20
-initial_enemy_position = [random.randint(0, WIDTH - enemy_size[0]), random.randint(0, HEIGHT - enemy_size[1])]
+initial_enemy_position = [random.randint(42, 1190 - enemy_size[0]), random.randint(53,631 - enemy_size[1])]
 enemies = []
 
 class Enemy:
@@ -154,7 +154,7 @@ def draw_enemy_bullet(enemy_pos):
     screen.blit(spitter_bullet_image, enemy_pos)
 
 num_crates = 15  # Number of crates
-crates = [(random.randint(100, WIDTH - crate_size[0] - 100), random.randint(100, HEIGHT - crate_size[1] - 100)) for _ in range(num_crates)]
+crates = [(random.randint(42, 1190 - crate_size[0] - 100), random.randint(53, 631 - crate_size[1] - 100)) for _ in range(num_crates)]
 
 def draw_crates(screen, crate_image, crate_positions):
     for pos in crate_positions:
@@ -230,6 +230,8 @@ GAME_OVER = pygame.USEREVENT + 2
 enemy_spawn_time = 3000  # Initial spawn time in milliseconds (e.g., 5000 ms = 5 seconds)
 min_enemy_spawn_time = 1000  # Minimum spawn time in milliseconds
 pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
+SPEED_PU_SPAWN = pygame.USEREVENT + 2
+pygame.time.set_timer(SPEED_PU_SPAWN, 5000)
 while running:
     current_time = pygame.time.get_ticks()
     for event in pygame.event.get():
@@ -243,6 +245,9 @@ while running:
             # Reduce spawn time for next enemy, respecting the minimum limit
             enemy_spawn_time = max(min_enemy_spawn_time, (int)(enemy_spawn_time * 0.99))
             pygame.time.set_timer(ENEMY_SPAWN, enemy_spawn_time)
+        if running == True and event.type == SPEED_PU_SPAWN:
+            speed_pu_pos = [random.randint(42, 1090), random.randint(53,531)]
+            SpeedPowerUp()
     
     keys = pygame.key.get_pressed()
     mx, my = pygame.mouse.get_pos()
